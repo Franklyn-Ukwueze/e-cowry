@@ -92,7 +92,7 @@ class DNCWholesale(Schema):
     description = fields.Str(required=True)
     color = fields.Str(required=True)
     size = fields.Str(required=True)
-    quantity = fields.Str(required=True)
+    quantity = fields.Int(required=True)
     retail_price = fields.Str(required=True)
     image = fields.Str(required=True)
 
