@@ -1,5 +1,7 @@
 import os
+import random
 import pymongo
+from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_pymongo import PyMongo
 
@@ -13,6 +15,7 @@ mydb = myclient["cowry"]
 carts = mydb["carts"]
 orders = mydb["carts"]
 
+current_date = datetime.now()
 
 @app.route('/api/add-to-cart', methods=['POST'])
 def add_to_cart():
@@ -51,7 +54,17 @@ def add_to_cart():
 @app.route('/submit_order', methods=['POST'])
 def submit_order():
     # Get the order details from the request
-    order_data = request.get_json()
+    user_id = request.json.get("user_id")
+    items = request.json.get("items")
+    total_cost = request.json.get("total_cost")
+
+    order_id = str(random.randint(100000000000, 999999999999))
+    data = orders.find_one({}, {"order_id": order_id})
+
+    while data:
+        order_id = random.randint(100000000000, 999999999999)
+
+    order_data = {"user_id" : f"{user_id}", "order_id" : f"{order_id}", "date" : current_date, "items" : items, "total_cost" : total_cost}
 
     orders.insert_one(order_data)
 
@@ -62,4 +75,4 @@ def submit_order():
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=False, use_reloader=False)
