@@ -163,7 +163,7 @@ def add_product():
         data = request.get_json()
         payload = BrandsGateway().load(data)
 
-        product_details = {"product_type" : payload["product_type"], "group_sku" : payload["group_sku"],
+        product_details = {"supplier_id" : "001","product_type" : payload["product_type"], "group_sku" : payload["group_sku"],
                             "variation_type" : payload["variation_type"], "product_sku" : payload["product_sku"],
                               "brand" : payload["brand"], "name" : payload["name"], "retail_price" : payload["retail_price"],
                                 "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
@@ -187,7 +187,7 @@ def add_product():
         data = request.get_json()
         payload = TradeEasy().load(data)
 
-        product_details = {"image" : payload["image"], "article" : payload["article"],
+        product_details = {"supplier_id" : "002", "image" : payload["image"], "article" : payload["article"],
                             "model" : payload["model"], "size" : payload["size"],
                               "quantity" : payload["quantity"], "price" : payload["price"], "retail_price" : payload["retail_price"], "gender" : payload["gender"]}
 
@@ -203,7 +203,7 @@ def add_product():
         data = request.get_json()
         payload = DNCWholesale().load(data)
 
-        product_details = {"store" : payload["store"], "lot" : payload["lot"],
+        product_details = {"supplier_id" : "003", "store" : payload["store"], "lot" : payload["lot"],
                             "merch_category" : payload["merch_category"], "wholesale_quantity" : payload["wholesale_quantity"],
                               "color" : payload["color"], "brand" : payload["brand"], "retail_price" : payload["retail_price"],
                                 "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
@@ -222,7 +222,7 @@ def add_product():
         data = request.get_json()
         payload = XMBO().load(data)
 
-        product_details = {"image" : payload["image"], "ref" : payload["ref"],
+        product_details = {"supplier_id" : "004", "image" : payload["image"], "ref" : payload["ref"],
                             "brand" : payload["brand"], "ean" : payload["ean"],
                               "hs" : payload["hs"], "material" : payload["material"], "made_in" : payload["made_in"],
                                 "retail_price" : payload["retail_price"], "description" : payload["description"],
