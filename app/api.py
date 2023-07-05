@@ -158,7 +158,7 @@ def submit_order():
     return jsonify(response)
 
 @app.route('/brandsgateway/add_product', methods=['POST'])
-def add_product():
+def brandsgateway_add_product():
     try:
         data = request.get_json()
         payload = BrandsGateway().load(data)
@@ -182,7 +182,7 @@ def add_product():
         return jsonify({'message': 'product added successfully.'}), 200
     
 @app.route('/tradeeasy/add_product', methods=['POST'])
-def add_product():
+def tradeeasy_add_product():
     try:
         data = request.get_json()
         payload = TradeEasy().load(data)
@@ -198,7 +198,7 @@ def add_product():
         return jsonify({'message': 'product added successfully.'}), 200
 
 @app.route('/dncwholesale/add_product', methods=['POST'])
-def add_product():
+def dncwholesale_add_product():
     try:
         data = request.get_json()
         payload = DNCWholesale().load(data)
@@ -217,7 +217,7 @@ def add_product():
         return jsonify({'message': 'product added successfully.'}), 200
 
 @app.route('/xmbo/add_product', methods=['POST'])
-def add_product():
+def xmbo_add_product():
     try:
         data = request.get_json()
         payload = XMBO().load(data)
