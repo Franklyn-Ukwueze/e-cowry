@@ -234,6 +234,18 @@ def xmbo_add_product():
         return jsonify(message=f"An exception occurred: {e}", status=False)
     else:
         return jsonify({'message': 'product added successfully.'}), 200
+    
+@app.route('/get/products', methods=['GET', 'POST'])
+def get_products():
+    try:
+        data = supplier_products.find({},{ "_id": 0})
+        product_list = list()
+        for i in data:
+            product_list.append(i)
+    except Exception as e:
+        return jsonify(message=f"An exception occurred: {e}", status=False)
+    else:
+        return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
