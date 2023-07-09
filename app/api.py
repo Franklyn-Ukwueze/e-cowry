@@ -6,6 +6,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_restful import Api
 from flask_pymongo import PyMongo
+from functools import wraps
 from marshmallow import Schema, fields, validate, validates, ValidationError
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -15,6 +16,7 @@ api = Api(app)
 
 CORS(app)
 
+urgent2k_token = os.environ.get("URGENT_2K_KEY")
 mongo_uri = os.environ.get("MONGO_URI")
 
 myclient = pymongo.MongoClient(mongo_uri)
@@ -62,11 +64,13 @@ class TradeEasy(Schema):
     image = fields.Str(required=True)
     article = fields.Str(required=True)
     model = fields.Str(required=True)
+    category = fields.Str(required=True)
     size = fields.Str(required=True)
     quantity = fields.Int(required=True)
     wholesale_price = fields.Str(required=True)
     retail_price = fields.Str(required=True)
     gender = fields.Str(required=True)
+    currency = fields.Str(required=True)
 
 class XMBO(Schema):
     image = fields.Str(required=True)
@@ -81,6 +85,7 @@ class XMBO(Schema):
     retail_price = fields.Str(required=True)
     price = fields.Str(required=True)
     article = fields.Str(required=True)
+    currency = fields.Str(required=True)
 
 class DNCWholesale(Schema):
     store = fields.Str(required=True)
@@ -95,8 +100,27 @@ class DNCWholesale(Schema):
     quantity = fields.Int(required=True)
     retail_price = fields.Str(required=True)
     image = fields.Str(required=True)
+    currency = fields.Str(required=True)
 
+# decorator function frequesting api key as header
+def urgent2k_token_required(f):
+    @wraps(f)
+    # the new, post-decoration function. Note *args and **kwargs here.
+    def decorated(*args, **kwargs):
+        token = None
 
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+        
+        if not token:
+            return {"status": False, "message": "Access token is missing at " + request.url, "data": None}, 401
+
+        if token == urgent2k_token:
+            return f(*args, **kwargs)
+        else:
+            return {"status": False, "message": "Invalid access token at " + request.url, "data": None}, 401
+
+    return decorated
 
 ########################APIs###########################
 
@@ -158,6 +182,7 @@ def submit_order():
     return jsonify(response)
 
 @app.route('/brandsgateway/add_product', methods=['POST'])
+@urgent2k_token_required
 def brandsgateway_add_product():
     try:
         data = request.get_json()
@@ -182,14 +207,16 @@ def brandsgateway_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
     
 @app.route('/tradeeasy/add_product', methods=['POST'])
+@urgent2k_token_required
 def tradeeasy_add_product():
     try:
         data = request.get_json()
         payload = TradeEasy().load(data)
 
         product_details = {"supplier_id" : "002", "image" : payload["image"], "article" : payload["article"],
-                            "model" : payload["model"], "size" : payload["size"],
-                              "quantity" : payload["quantity"], "price" : payload["price"], "retail_price" : payload["retail_price"], "gender" : payload["gender"]}
+                            "model" : payload["model"],  "category" : payload["category"], "size" : payload["size"],
+                              "quantity" : payload["quantity"], "price" : payload["price"], "retail_price" : payload["retail_price"], "gender" : payload["gender"],
+                              "currency" : payload["currency"]}
 
         supplier_products.insert_one(product_details)
     except Exception as e:
@@ -198,6 +225,7 @@ def tradeeasy_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
 
 @app.route('/dncwholesale/add_product', methods=['POST'])
+@urgent2k_token_required
 def dncwholesale_add_product():
     try:
         data = request.get_json()
@@ -208,7 +236,7 @@ def dncwholesale_add_product():
                               "color" : payload["color"], "brand" : payload["brand"], "retail_price" : payload["retail_price"],
                                 "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
                                   "size" : payload["size"], "image" : payload["image"],
-                                    "quantity" : payload["quantity"]}
+                                    "quantity" : payload["quantity"], "currency" : payload["currency"]}
 
         supplier_products.insert_one(product_details)
     except Exception as e:
@@ -217,6 +245,7 @@ def dncwholesale_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
 
 @app.route('/xmbo/add_product', methods=['POST'])
+@urgent2k_token_required
 def xmbo_add_product():
     try:
         data = request.get_json()
@@ -227,7 +256,7 @@ def xmbo_add_product():
                               "hs" : payload["hs"], "material" : payload["material"], "made_in" : payload["made_in"],
                                 "retail_price" : payload["retail_price"], "description" : payload["description"],
                                   "quantity" : payload["quantity"], "price" : payload["price"],
-                                    "article" : payload["article"]}
+                                    "article" : payload["article"], "currency" : payload["currency"]}
 
         supplier_products.insert_one(product_details)
     except Exception as e:
@@ -236,6 +265,7 @@ def xmbo_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
     
 @app.route('/get/products', methods=['GET', 'POST'])
+@urgent2k_token_required
 def get_products():
     try:
         data = supplier_products.find({},{ "_id": 0})
