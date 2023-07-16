@@ -1,6 +1,7 @@
 import os
 import random
 import pymongo
+import requests
 from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -49,7 +50,7 @@ class BrandsGateway(Schema):
     description = fields.Str(required=True)
     description_plain = fields.Str(required=True)
     main_picture = fields.Str(required=True)
-    other_pictures = fields.List(required=False)
+    other_pictures = fields.List(fields.Dict(), required=False)
     gender = fields.Str(required=True)
     category = fields.Str(required=True)
     subcategory = fields.Str(required=True)
@@ -67,7 +68,7 @@ class BrandsGateway(Schema):
 
 class TradeEasy(Schema):
     image = fields.Str(required=True)
-    other_pictures = fields.List(required=False)
+    other_pictures = fields.List(fields.Dict(), required=False)
     article = fields.Str(required=True)
     model = fields.Str(required=True)
     category = fields.Str(required=True)
@@ -80,7 +81,7 @@ class TradeEasy(Schema):
 
 class XMBO(Schema):
     image = fields.Str(required=True)
-    other_pictures = fields.List(required=False)
+    other_pictures = fields.List(fields.Dict(), required=False)
     ref = fields.Int(required=False)
     brand = fields.Str(required=True)
     ean = fields.Str(required=True)
@@ -107,7 +108,7 @@ class DNCWholesale(Schema):
     quantity = fields.Int(required=True)
     retail_price = fields.Str(required=True)
     image = fields.Str(required=True)
-    other_pictures = fields.List(required=False)
+    other_pictures = fields.List(fields.Dict(), required=False)
     currency = fields.Str(required=True)
 
 # decorator function frequesting api key as header
@@ -335,6 +336,37 @@ def get_products(supplier_id):
     else:
         return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
 
+@app.route('/convert', methods=['POST'])
+def convert_currency():
+    
+    try:
+        # Retrieve request data
+        data = request.get_json()
+        amount = data.get('amount')
+        base_currency = data.get('base_currency')
+        target_currency = data.get('target_currency')
+
+        # Make API call to convert currency
+        api_key = os.environ.get("CONVERSION_API_KEY")
+        url = f"https://v6.exchangeratesapi.io/latest?access_key={api_key}&base={base_currency}&symbols={target_currency}"
+        response = requests.get(url)
+        exchange_rates = response.json().get('rates')
+        
+        # Check if conversion is successful
+        if exchange_rates:
+            conversion_rate = exchange_rates.get(target_currency)
+            if conversion_rate:
+                converted_amount = amount * conversion_rate
+                result = {
+                    'amount': amount,
+                    'base_currency': base_currency,
+                    'target_currency': target_currency,
+                    'converted_amount': converted_amount
+                }
+    except Exception as e:
+        return jsonify(message=f"An exception occurred: {e}", status=False)
+    else:
+        return {"status": True, "message":"{base_currency} to {target_currency} successfully.", "data": result }, 200
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
