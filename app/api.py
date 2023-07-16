@@ -25,10 +25,18 @@ mydb = myclient["cowry"]
 carts = mydb["carts"]
 orders = mydb["carts"]
 supplier_products = mydb["supplier_products"]
+suppliers = mydb["suppliers"]
 
 current_date = datetime.now()
 
 #######################SCHEMAS#########################
+class RegisterSupplier(Schema):
+    supplier_name = fields.Str(required=True)
+    location = fields.Str(required=False)
+    contact_address = fields.Str(required=False)
+    email = fields.Str(required=True)
+    phone = fields.Str(required=False)
+
 class BrandsGateway(Schema):
     product_type = fields.Str(required=True)
     group_sku = fields.Str(required=True)
@@ -39,12 +47,9 @@ class BrandsGateway(Schema):
     retail_price = fields.Int(required=True)
     wholesale_price = fields.Int(required=True)
     description = fields.Str(required=True)
+    description_plain = fields.Str(required=True)
     main_picture = fields.Str(required=True)
-    picture_1 = fields.Str(required=False)
-    picture_2 = fields.Str(required=False)
-    picture_3 = fields.Str(required=False)
-    picture_4 = fields.Str(required=False)
-    picture_5 = fields.Str(required=False)
+    other_pictures = fields.List(required=False)
     gender = fields.Str(required=True)
     category = fields.Str(required=True)
     subcategory = fields.Str(required=True)
@@ -62,6 +67,7 @@ class BrandsGateway(Schema):
 
 class TradeEasy(Schema):
     image = fields.Str(required=True)
+    other_pictures = fields.List(required=False)
     article = fields.Str(required=True)
     model = fields.Str(required=True)
     category = fields.Str(required=True)
@@ -74,6 +80,7 @@ class TradeEasy(Schema):
 
 class XMBO(Schema):
     image = fields.Str(required=True)
+    other_pictures = fields.List(required=False)
     ref = fields.Int(required=False)
     brand = fields.Str(required=True)
     ean = fields.Str(required=True)
@@ -100,6 +107,7 @@ class DNCWholesale(Schema):
     quantity = fields.Int(required=True)
     retail_price = fields.Str(required=True)
     image = fields.Str(required=True)
+    other_pictures = fields.List(required=False)
     currency = fields.Str(required=True)
 
 # decorator function frequesting api key as header
@@ -188,15 +196,13 @@ def brandsgateway_add_product():
         data = request.get_json()
         payload = BrandsGateway().load(data)
 
-        product_details = {"supplier_id" : "001","product_type" : payload["product_type"], "group_sku" : payload["group_sku"],
+        product_details = {"supplier_id" : 1,"product_type" : payload["product_type"], "group_sku" : payload["group_sku"],
                             "variation_type" : payload["variation_type"], "product_sku" : payload["product_sku"],
                               "brand" : payload["brand"], "name" : payload["name"], "retail_price" : payload["retail_price"],
-                                "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
-                                  "main_picture" : payload["main_picture"], "picture_1" : payload["picture_1"],
-                                    "picture_2" : payload["picture_2"], "picture_3" : payload["picture_3"],
-                                      "picture_4" : payload["picture_4"], "picture_5" : payload["picture_5"], "gender" : payload["gender"],
+                                "wholesale_price" : payload["wholesale_price"], "description" : payload["description"], "description_plain" : payload["description_plain"],
+                                  "main_picture" : payload["main_picture"], "other_pictures" : payload["other_pictures"], "gender" : payload["gender"],
                                         "category" : payload["category"], "subcategory" : payload["subcategory"], "size" : payload["size"],
-                                          "quantity" : payload["quantity"], "color" : payload["color"], "material" : payload["material"],
+                                          "quantity" : payload["quantity"], "color" : payload["color"], "material" : payload["material"], 
                                             "product_id" : payload["product_id"], "size_slug" : payload["size_slug"], "weight" : payload["weight"],
                                               "location" : payload["location"], "currency" : payload["currency"]}
 
@@ -213,10 +219,10 @@ def tradeeasy_add_product():
         data = request.get_json()
         payload = TradeEasy().load(data)
 
-        product_details = {"supplier_id" : "002", "image" : payload["image"], "article" : payload["article"],
+        product_details = {"supplier_id" : 2, "image" : payload["image"], "article" : payload["article"],
                             "model" : payload["model"],  "category" : payload["category"], "size" : payload["size"],
                               "quantity" : payload["quantity"], "price" : payload["price"], "retail_price" : payload["retail_price"], "gender" : payload["gender"],
-                              "currency" : payload["currency"]}
+                               "other_pictures" : payload["other_pictures"], "currency" : payload["currency"]}
 
         supplier_products.insert_one(product_details)
     except Exception as e:
@@ -231,11 +237,12 @@ def dncwholesale_add_product():
         data = request.get_json()
         payload = DNCWholesale().load(data)
 
-        product_details = {"supplier_id" : "003", "store" : payload["store"], "lot" : payload["lot"],
+        product_details = {"supplier_id" : 3, "store" : payload["store"], "lot" : payload["lot"],
                             "merch_category" : payload["merch_category"], "wholesale_quantity" : payload["wholesale_quantity"],
                               "color" : payload["color"], "brand" : payload["brand"], "retail_price" : payload["retail_price"],
                                 "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
                                   "size" : payload["size"], "image" : payload["image"],
+                                   "other_pictures" : payload["other_pictures"],
                                     "quantity" : payload["quantity"], "currency" : payload["currency"]}
 
         supplier_products.insert_one(product_details)
@@ -251,8 +258,8 @@ def xmbo_add_product():
         data = request.get_json()
         payload = XMBO().load(data)
 
-        product_details = {"supplier_id" : "004", "image" : payload["image"], "ref" : payload["ref"],
-                            "brand" : payload["brand"], "ean" : payload["ean"],
+        product_details = {"supplier_id" : 4, "image" : payload["image"], "ref" : payload["ref"],
+                            "brand" : payload["brand"], "ean" : payload["ean"], "other_pictures" : payload["other_pictures"],
                               "hs" : payload["hs"], "material" : payload["material"], "made_in" : payload["made_in"],
                                 "retail_price" : payload["retail_price"], "description" : payload["description"],
                                   "quantity" : payload["quantity"], "price" : payload["price"],
@@ -276,6 +283,58 @@ def get_products():
         return jsonify(message=f"An exception occurred: {e}", status=False)
     else:
         return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
+
+@app.route('/supplier/register', methods=['POST'])
+@urgent2k_token_required
+def register_supplier():
+    try:
+        data = request.get_json()
+        payload = RegisterSupplier().load(data)
+
+        # Find the maximum supplier ID
+        max_supplier_id = suppliers.find_one(sort=[("supplier_id", -1)])
+        if max_supplier_id:
+            supplier_id = max_supplier_id['supplier_id'] + 1
+        else:
+            supplier_id = 1
+
+        supplier_details = {"supplier_id" : supplier_id, "supplier_name" : payload["supplier_name"],
+                        "location" : payload["location"], "contact_address" : payload["contact_address"],
+                         "email" : payload["email"], "phone" : payload["phone"] }
+        
+        suppliers.insert_one(supplier_details)
+        
+    except Exception as e:
+        return jsonify(message=f"An exception occurred: {e}", status=False)
+    else:
+        return {"status": True, "message": f"{payload['supplier_name']} has been registered with supplier ID {supplier_id}", "data":supplier_id}, 200
+
+@app.route('/get/suppliers', methods=['GET', 'POST'])
+@urgent2k_token_required
+def get_suppliers():
+    try:
+        data = suppliers.find({},{ "_id": 0})
+        supplier_list = list()
+        for i in data:
+            supplier_list.append(i)
+    except Exception as e:
+        return jsonify(message=f"An exception occurred: {e}", status=False)
+    else:
+        return {"status": True, "message":"Suppliers have been retrieved successfully", "data": supplier_list }, 200
+
+@app.route('/get/<string:supplier_id>/products', methods=['GET', 'POST'])
+@urgent2k_token_required
+def get_products(supplier_id):
+    try:
+        data = supplier_products.find({"supplier_id" : int(supplier_id)},{ "_id": 0,})
+        product_list = list()
+        for i in data:
+            product_list.append(i)
+    except Exception as e:
+        return jsonify(message=f"An exception occurred: {e}", status=False)
+    else:
+        return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
+
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
