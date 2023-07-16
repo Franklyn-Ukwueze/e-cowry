@@ -1,7 +1,6 @@
-import os
+import requests, os
 import random
 import pymongo
-import requests
 from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
