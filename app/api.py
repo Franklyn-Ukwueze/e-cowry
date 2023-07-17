@@ -361,7 +361,7 @@ def convert_currency():
                 base_currency, target_currency, api_key)
         response = requests.get(url)
         response = response.json()
-        exchange_rate = response["Realtime Currency Exchange Rate"]["5. Exchange Rate"]
+        exchange_rate = response["Realtime Currency Exchange Rate"].get("5. Exchange Rate")
         exchange_rate = float(exchange_rate)
         
         # Check if conversion is successful
@@ -378,7 +378,7 @@ def convert_currency():
     except Exception as e:
         return jsonify(message=f"An exception occurred: {e}", status=False)
     else:
-        return {"status": True, "message":"{base_currency} to {target_currency} successfully.", "data": result }, 200
+        return jsonify(status=True, message=f"{base_currency} to {target_currency} successfully.", data=result ), 200
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
