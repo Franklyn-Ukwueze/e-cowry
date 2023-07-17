@@ -4,7 +4,7 @@ import pymongo
 from datetime import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_restful import Api
+from flask_restful import Api, Resource
 from flask_pymongo import PyMongo
 from functools import wraps
 from marshmallow import Schema, fields, validate, validates, ValidationError
@@ -131,6 +131,12 @@ def cowry_token_required(f):
     return decorated
 
 ########################APIs###########################
+class Home(Resource):
+#    @urgent2k_token_required
+    def get(self):
+        return {'message': "Welcome to the homepage of this webservice."}
+api.add_resource(Home,'/')
+
 
 @app.route('/add_to_cart', methods=['POST'])
 @cowry_token_required
@@ -344,26 +350,28 @@ def convert_currency():
     try:
         # Retrieve request data
         data = request.get_json()
-        amount = data.get('amount')
+        amount = float(data.get('amount'))
         base_currency = data.get('base_currency')
         target_currency = data.get('target_currency')
 
         # Make API call to convert currency
         api_key = os.environ.get("CONVERSION_API_KEY")
-        url = f"https://v6.exchangeratesapi.io/latest?access_key={api_key}&base={base_currency}&symbols={target_currency}"
+        url = 'https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency={}&to_currency={}&apikey={}'.format(
+                base_currency, target_currency, api_key)
         response = requests.get(url)
-        exchange_rates = response.json().get('rates')
+        exchange_rate = response['Realtime Currency Exchange Rate']['5. Exchange Rate']
+        exchange_rate = float(exchange_rate)
         
         # Check if conversion is successful
-        if exchange_rates:
-            conversion_rate = exchange_rates.get(target_currency)
+        if exchange_rate:
+            conversion_rate = exchange_rate
             if conversion_rate:
                 converted_amount = amount * conversion_rate
                 result = {
                     'amount': amount,
                     'base_currency': base_currency,
                     'target_currency': target_currency,
-                    'converted_amount': converted_amount
+                    'converted_amount': round(converted_amount, 2)
                 }
     except Exception as e:
         return jsonify(message=f"An exception occurred: {e}", status=False)
