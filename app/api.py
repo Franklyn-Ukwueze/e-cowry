@@ -16,7 +16,7 @@ api = Api(app)
 
 CORS(app)
 
-urgent2k_token = os.environ.get("URGENT_2K_KEY")
+cowry_token = os.environ.get("COWRY_KEY")
 mongo_uri = os.environ.get("MONGO_URI")
 
 myclient = pymongo.MongoClient(mongo_uri)
@@ -111,7 +111,7 @@ class DNCWholesale(Schema):
     currency = fields.Str(required=True)
 
 # decorator function frequesting api key as header
-def urgent2k_token_required(f):
+def cowry_token_required(f):
     @wraps(f)
     # the new, post-decoration function. Note *args and **kwargs here.
     def decorated(*args, **kwargs):
@@ -123,7 +123,7 @@ def urgent2k_token_required(f):
         if not token:
             return {"status": False, "message": "Access token is missing at " + request.url, "data": None}, 401
 
-        if token == urgent2k_token:
+        if token == cowry_token:
             return f(*args, **kwargs)
         else:
             return {"status": False, "message": "Invalid access token at " + request.url, "data": None}, 401
@@ -133,6 +133,7 @@ def urgent2k_token_required(f):
 ########################APIs###########################
 
 @app.route('/add_to_cart', methods=['POST'])
+@cowry_token_required
 def add_to_cart():
     try:
         # Retrieve user account information from request
@@ -167,6 +168,7 @@ def add_to_cart():
         return jsonify({'message': 'Item added to cart successfully.'}), 200
 
 @app.route('/submit_order', methods=['POST'])
+@cowry_token_required
 def submit_order():
     # Get the order details from the request
     user_id = request.json.get("user_id")
@@ -190,7 +192,7 @@ def submit_order():
     return jsonify(response)
 
 @app.route('/brandsgateway/add_product', methods=['POST'])
-@urgent2k_token_required
+@cowry_token_required
 def brandsgateway_add_product():
     try:
         data = request.get_json()
@@ -213,7 +215,7 @@ def brandsgateway_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
     
 @app.route('/tradeeasy/add_product', methods=['POST'])
-@urgent2k_token_required
+@cowry_token_required
 def tradeeasy_add_product():
     try:
         data = request.get_json()
@@ -231,7 +233,7 @@ def tradeeasy_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
 
 @app.route('/dncwholesale/add_product', methods=['POST'])
-@urgent2k_token_required
+@cowry_token_required
 def dncwholesale_add_product():
     try:
         data = request.get_json()
@@ -252,7 +254,7 @@ def dncwholesale_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
 
 @app.route('/xmbo/add_product', methods=['POST'])
-@urgent2k_token_required
+@cowry_token_required
 def xmbo_add_product():
     try:
         data = request.get_json()
@@ -272,7 +274,7 @@ def xmbo_add_product():
         return jsonify({'message': 'product added successfully.'}), 200
     
 @app.route('/get/products', methods=['GET', 'POST'])
-@urgent2k_token_required
+@cowry_token_required
 def get_products():
     try:
         data = supplier_products.find({},{ "_id": 0})
@@ -285,7 +287,7 @@ def get_products():
         return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
 
 @app.route('/supplier/register', methods=['POST'])
-@urgent2k_token_required
+@cowry_token_required
 def register_supplier():
     try:
         data = request.get_json()
@@ -310,7 +312,7 @@ def register_supplier():
         return {"status": True, "message": f"{payload['supplier_name']} has been registered with supplier ID {supplier_id}", "data":supplier_id}, 200
 
 @app.route('/get/suppliers', methods=['GET', 'POST'])
-@urgent2k_token_required
+@cowry_token_required
 def get_suppliers():
     try:
         data = suppliers.find({},{ "_id": 0})
@@ -323,8 +325,8 @@ def get_suppliers():
         return {"status": True, "message":"Suppliers have been retrieved successfully", "data": supplier_list }, 200
 
 @app.route('/get/<string:supplier_id>/products', methods=['GET', 'POST'])
-@urgent2k_token_required
-def get_products(supplier_id):
+@cowry_token_required
+def get_supplier_products(supplier_id):
     try:
         data = supplier_products.find({"supplier_id" : int(supplier_id)},{ "_id": 0,})
         product_list = list()
@@ -335,7 +337,8 @@ def get_products(supplier_id):
     else:
         return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
 
-@app.route('/convert', methods=['POST'])
+@app.route('/convert_currency', methods=['POST'])
+@cowry_token_required
 def convert_currency():
     
     try:
