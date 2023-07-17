@@ -350,7 +350,8 @@ def convert_currency():
     try:
         # Retrieve request data
         data = request.get_json()
-        amount = float(data.get('amount'))
+        amount = data.get('amount')
+        amount = float(amount)
         base_currency = data.get('base_currency')
         target_currency = data.get('target_currency')
 
@@ -359,6 +360,7 @@ def convert_currency():
         url = 'https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency={}&to_currency={}&apikey={}'.format(
                 base_currency, target_currency, api_key)
         response = requests.get(url)
+        response = response.json()
         exchange_rate = response['Realtime Currency Exchange Rate']['5. Exchange Rate']
         exchange_rate = float(exchange_rate)
         
