@@ -378,7 +378,7 @@ def convert_currency():
     except Exception as e:
         return jsonify(message=f"An exception occurred: {e}", status=False)
     else:
-        return {"status": True, "message":f"{base_currency} to {target_currency} successfully.", "data": result }, 200
+        return {"status": True, "message":"{base_currency} to {target_currency} successfully.", "data": result }, 200
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
