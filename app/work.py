@@ -1,4 +1,6 @@
 import os
+import PyPDF2
+import requests
 import pandas as pd
 from flask import Flask, jsonify, request
 from flask_pymongo import PyMongo
@@ -73,6 +75,45 @@ excel_file_path = "path/to/your/excel_file.xlsx"
 api_url = "https://example.com/api/endpoint"
 
 read_excel_and_send_to_api(excel_file_path, api_url)
+
+
+def read_pdf_data(pdf_file):
+    data = []
+    with open(pdf_file, 'rb') as file:
+        pdf_reader = PyPDF2.PdfFileReader(file)
+        num_pages = pdf_reader.numPages
+
+        for page_number in range(num_pages):
+            page = pdf_reader.getPage(page_number)
+            text = page.extract_text()
+            lines = text.split('\n')
+
+            for line in lines:
+                # Assuming that each row is separated by tabs or spaces
+                row_data = line.split('\t')  # Replace '\t' with ' ' if separated by spaces
+                data.append(row_data)
+
+    return data
+
+def send_data_to_api(api_url, data):
+    for row_data in data:
+        # Assuming your API expects a JSON payload
+        payload = {'data': row_data}
+
+        # Send the data to the API
+        response = requests.post(api_url, json=payload)
+
+        # You can process the API response here if needed
+        if response.status_code == 200:
+            print("Data sent successfully!")
+        else:
+            print(f"Failed to send data. Status code: {response.status_code}")
+
+pdf_file_path = "path/to/your/pdf_file.pdf"
+api_url = "https://example.com/api/endpoint"  # Replace this with your API endpoint URL
+
+data = read_pdf_data(pdf_file_path)
+send_data_to_api(api_url, data)
 
 
 print(add_to_cart("1234", "2223333", 2))
