@@ -1,5 +1,6 @@
 import os
 import PyPDF2
+import tabula
 import requests
 import pandas as pd
 from flask import Flask, jsonify, request
@@ -114,6 +115,24 @@ api_url = "https://example.com/api/endpoint"  # Replace this with your API endpo
 
 data = read_pdf_data(pdf_file_path)
 send_data_to_api(api_url, data)
+
+
+def convert_pdf_to_excel(pdf_file, excel_file):
+    # Read tables from the PDF file
+    tables = tabula.read_pdf(pdf_file, pages='all', multiple_tables=True)
+
+    # Assuming all tables are relevant, concatenate them into a single DataFrame
+    df = pd.concat(tables)
+
+    # Save the DataFrame to an Excel file
+    df.to_excel(excel_file, index=False)
+    print(f"PDF data successfully converted to {excel_file}.")
+
+if __name__ == "__main__":
+    pdf_file_path = "path/to/your/pdf_file.pdf"
+    excel_file_path = "path/to/your/excel_file.xlsx"
+
+    convert_pdf_to_excel(pdf_file_path, excel_file_path)
 
 
 print(add_to_cart("1234", "2223333", 2))
