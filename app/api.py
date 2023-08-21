@@ -8,6 +8,14 @@ from flask_restful import Api, Resource
 from flask_pymongo import PyMongo
 from functools import wraps
 from marshmallow import Schema, fields, validate, validates, ValidationError
+from cryptography.fernet import Fernet
+
+# Generate a secret key for encryption
+SECRET_KEY = Fernet.generate_key()
+cipher_suite = Fernet(SECRET_KEY)
+
+# In-memory database to store encrypted payment information (for demonstration purposes)
+encrypted_payments = {}
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -379,6 +387,41 @@ def convert_currency():
         return jsonify(message=f"An exception occurred: {e}", status=False)
     else:
         return jsonify(status=True, message=f"{base_currency} to {target_currency} successfully.", data=result ), 200
+
+
+
+@app.route('/collect_payment', methods=['POST'])
+def collect_payment():
+    data = request.json
+
+    # Assume data includes 'card_number', 'expiration_date', 'cvv', etc.
+    card_number = data['card_number']
+    expiration_date = data['expiration_date']
+    cvv = data['cvv']
+
+    # Encrypt payment information
+    payment_info = f"{card_number}|{expiration_date}|{cvv}"
+    encrypted_payment = cipher_suite.encrypt(payment_info.encode())
+
+    # Store encrypted payment information (insecure for demonstration purposes)
+    encrypted_payments[data['user_id']] = encrypted_payment
+
+    return jsonify({"message": "Payment information collected and encrypted."})
+
+@app.route('/get_payment/<user_id>', methods=['GET'])
+def get_payment(user_id):
+    if user_id in encrypted_payments:
+        encrypted_payment = encrypted_payments[user_id]
+        decrypted_payment_info = cipher_suite.decrypt(encrypted_payment).decode()
+        card_number, expiration_date, cvv = decrypted_payment_info.split('|')
+        return jsonify({
+            "card_number": card_number[-4:],  # Display only the last 4 digits
+            "expiration_date": expiration_date,
+            "cvv": cvv[-3:],  # Display only the last 3 digits
+        })
+    else:
+        return jsonify({"message": "Payment information not found."}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
