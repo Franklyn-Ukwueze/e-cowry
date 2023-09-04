@@ -479,6 +479,66 @@ def order_status(order_id):
             'data': None,
             'status': True
         }), 200
-        
+
+
+@app.route("/update/<tracking_number>", methods=["PUT"])
+def update_package_status(tracking_number):
+    new_status = request.json.get("status")
+    new_location = request.json.get("location")
+
+    package_info = packages_collection.find_one({"_id": tracking_number})
+    if package_info:
+        old_status = package_info["status"]
+
+        # Update package status and location
+        packages_collection.update_one(
+            {"_id": tracking_number},
+            {
+                "$set": {
+                    "status": new_status,
+                    "location": new_location,
+                },
+                "$push": {
+                    "tracking_history": {
+                        "status": new_status,
+                        "location": new_location,
+                    },
+                },
+            },
+        )
+
+        # Send emails to admin and customer
+        send_email(package_info["admin_email"], f"Package {tracking_number} Status Update", f"Status: {old_status} -> {new_status}\nLocation: {new_location}")
+        send_email(package_info["customer_email"], f"Package {tracking_number} Status Update", f"Status: {old_status} -> {new_status}\nLocation: {new_location}")
+
+        return jsonify({"message": "Package updated successfully"})
+    else:
+        return jsonify({"error": "Package not found"}), 404
+
+
+def send_email(to_email, subject, message):
+    # Configure your SMTP server settings
+    smtp_server = "smtp.example.com"
+    smtp_port = 587
+    smtp_username = "your_username"
+    smtp_password = "your_password"
+
+    # Create and send the email
+    from_email = "your_email@example.com"
+    msg = MIMEText(message)
+    msg["Subject"] = subject
+    msg["From"] = from_email
+    msg["To"] = to_email
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.sendmail(from_email, to_email, msg.as_string())
+        server.quit()
+        print(f"Email sent to {to_email}")
+    except Exception as e:
+        print(f"Email sending failed: {str(e)}")
+
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
