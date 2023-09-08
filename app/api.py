@@ -8,14 +8,20 @@ from flask_restful import Api, Resource
 from flask_pymongo import PyMongo
 from functools import wraps
 from marshmallow import Schema, fields, validate, validates, ValidationError
-from cryptography.fernet import Fernet
+#from cryptography.fernet import Fernet
+
 
 # Generate a secret key for encryption
-SECRET_KEY = Fernet.generate_key()
-cipher_suite = Fernet(SECRET_KEY)
+# SECRET_KEY = Fernet.generate_key()
+# cipher_suite = Fernet(SECRET_KEY)
 
 # In-memory database to store encrypted payment information (for demonstration purposes)
-encrypted_payments = {}
+#encrypted_payments = {}
+
+# CJ Dropshipping API Base URL
+CJ_API_BASE_URL = os.environ.get("CJ_API_BASE_URL")
+
+CJ_API_KEY = os.environ.get("CJ_API_KEY")
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -422,123 +428,262 @@ def get_payment(user_id):
     else:
         return jsonify({"message": "Payment information not found."}), 404
 
-@app.route('/order/<string:order_id>/status', methods=['GET', 'PUT'])
-def order_status(order_id):
-    if request.method == 'GET':
-        order = orders.find_one({'order_id': order_id}, {'_id': 0})
-        if order:
-            return jsonify({
-                'message': f"Order with order id {order_id} retrieved successfully",
-                'data': order,
-                'status': True
-            })
-        else:
-            return jsonify({
-                'message': f"Could not find order with order id {order_id}",
-                'data': None,
-                'status': False
-            }), 404
-    elif request.method == 'PUT':
-        data = request.json
-        status = data.get('status')
-        stage = data.get('stage')
-        admin_email = data.get('admin-email')
-        customer_email = data.get('customer-email')
+# @app.route('/order/<string:order_id>/status', methods=['GET', 'PUT'])
+# def order_status(order_id):
+#     if request.method == 'GET':
+#         order = orders.find_one({'order_id': order_id}, {'_id': 0})
+#         if order:
+#             return jsonify({
+#                 'message': f"Order with order id {order_id} retrieved successfully",
+#                 'data': order,
+#                 'status': True
+#             })
+#         else:
+#             return jsonify({
+#                 'message': f"Could not find order with order id {order_id}",
+#                 'data': None,
+#                 'status': False
+#             }), 404
+#     elif request.method == 'PUT':
+#         data = request.json
+#         status = data.get('status')
+#         stage = data.get('stage')
+#         admin_email = data.get('admin-email')
+#         customer_email = data.get('customer-email')
 
-        # The payload the client sent is incomplete 
-        if not status or not stage or not admin_email or not customer_email:
-            return jsonify({
-                'message': 'Missing required payload',
-                'data': None,
-                'status': False
-            }), 400
+#         # The payload the client sent is incomplete 
+#         if not status or not stage or not admin_email or not customer_email:
+#             return jsonify({
+#                 'message': 'Missing required payload',
+#                 'data': None,
+#                 'status': False
+#             }), 400
 
-        # Update the order status in the database
-        update = orders.update_one({'order_id': order_id}, {
-            '$set': {
-                'status': status,
-                'stage': stage
-            }
-        })
-        if update.matched_count == 0:
-            return jsonify({
-                'message': f"Could not find order with order id {order_id}",
-                'data': None,
-                'status': False
-            }), 404
+#         # Update the order status in the database
+#         update = orders.update_one({'order_id': order_id}, {
+#             '$set': {
+#                 'status': status,
+#                 'stage': stage
+#             }
+#         })
+#         if update.matched_count == 0:
+#             return jsonify({
+#                 'message': f"Could not find order with order id {order_id}",
+#                 'data': None,
+#                 'status': False
+#             }), 404
         
-        # Send out emails to admin and customer
-        subject = f"Update to order ({order_id}) - {status}"
-        recipients = [admin_email, customer_email]
-        body = f"The order with order id {order_id} has been updated"
-        message = Message(subject=subject, recipients=recipients, body=body)
-        mail.send(message)
+#         # Send out emails to admin and customer
+#         subject = f"Update to order ({order_id}) - {status}"
+#         recipients = [admin_email, customer_email]
+#         body = f"The order with order id {order_id} has been updated"
+#         message = Message(subject=subject, recipients=recipients, body=body)
+#         mail.send(message)
 
-        return jsonify({
-            'message': f"Order with order id {order_id} has been successfully updated",
-            'data': None,
-            'status': True
-        }), 200
+#         return jsonify({
+#             'message': f"Order with order id {order_id} has been successfully updated",
+#             'data': None,
+#             'status': True
+#         }), 200
 
 
-@app.route("/update/<tracking_number>", methods=["PUT"])
-def update_package_status(tracking_number):
-    new_status = request.json.get("status")
-    new_location = request.json.get("location")
+# @app.route("/update/<tracking_number>", methods=["PUT"])
+# def update_package_status(tracking_number):
+#     new_status = request.json.get("status")
+#     new_location = request.json.get("location")
 
-    package_info = packages_collection.find_one({"_id": tracking_number})
-    if package_info:
-        old_status = package_info["status"]
+#     package_info = packages_collection.find_one({"_id": tracking_number})
+#     if package_info:
+#         old_status = package_info["status"]
 
-        # Update package status and location
-        packages_collection.update_one(
-            {"_id": tracking_number},
-            {
-                "$set": {
-                    "status": new_status,
-                    "location": new_location,
-                },
-                "$push": {
-                    "tracking_history": {
-                        "status": new_status,
-                        "location": new_location,
-                    },
-                },
-            },
-        )
+#         # Update package status and location
+#         packages_collection.update_one(
+#             {"_id": tracking_number},
+#             {
+#                 "$set": {
+#                     "status": new_status,
+#                     "location": new_location,
+#                 },
+#                 "$push": {
+#                     "tracking_history": {
+#                         "status": new_status,
+#                         "location": new_location,
+#                     },
+#                 },
+#             },
+#         )
 
-        # Send emails to admin and customer
-        send_email(package_info["admin_email"], f"Package {tracking_number} Status Update", f"Status: {old_status} -> {new_status}\nLocation: {new_location}")
-        send_email(package_info["customer_email"], f"Package {tracking_number} Status Update", f"Status: {old_status} -> {new_status}\nLocation: {new_location}")
+#         # Send emails to admin and customer
+#         send_email(package_info["admin_email"], f"Package {tracking_number} Status Update", f"Status: {old_status} -> {new_status}\nLocation: {new_location}")
+#         send_email(package_info["customer_email"], f"Package {tracking_number} Status Update", f"Status: {old_status} -> {new_status}\nLocation: {new_location}")
 
-        return jsonify({"message": "Package updated successfully"})
+#         return jsonify({"message": "Package updated successfully"})
+#     else:
+#         return jsonify({"error": "Package not found"}), 404
+
+
+# def send_email(to_email, subject, message):
+#     # Configure your SMTP server settings
+#     smtp_server = "smtp.example.com"
+#     smtp_port = 587
+#     smtp_username = "your_username"
+#     smtp_password = "your_password"
+
+#     # Create and send the email
+#     from_email = "your_email@example.com"
+#     msg = MIMEText(message)
+#     msg["Subject"] = subject
+#     msg["From"] = from_email
+#     msg["To"] = to_email
+
+#     try:
+#         server = smtplib.SMTP(smtp_server, smtp_port)
+#         server.starttls()
+#         server.login(smtp_username, smtp_password)
+#         server.sendmail(from_email, to_email, msg.as_string())
+#         server.quit()
+#         print(f"Email sent to {to_email}")
+#     except Exception as e:
+#         print(f"Email sending failed: {str(e)}")
+
+
+# CJ Dropshipping API Base URL
+CJ_API_BASE_URL = "https://api.cjdropshipping.com/app/"
+
+CJ_API_KEY = "your_api_key"
+
+
+# Endpoint to retrieve all products from cj dropshipping
+@app.route("/get_cj_products", methods=["GET"])
+def get_products():
+    # Make a request to CJ Dropshipping's product list API
+    headers = {
+        "CJ-Access-Token": f"{CJ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.get(f"{CJ_API_BASE_URL}product/getCategory", headers=headers)
+    
+    if response.status_code == 200:
+        products_data = response.json()
+        return jsonify(products_data)
     else:
-        return jsonify({"error": "Package not found"}), 404
+        return jsonify({"error": "Failed to retrieve products"}), response.status_code
+
+# Endpoint to retrieve a product's details by ID, Product SKU, or Variant SKU on CJ dropshipping
+@app.route("/get_cj_product_details", methods=["GET"])
+def get_product_details():
+    # Get the product ID, Product SKU, or Variant SKU from the query parameters
+    product_id = request.args.get("product_id")
+    product_sku = request.args.get("product_sku")
+    variant_sku = request.args.get("variant_sku")
+    
+    # Check if any of the parameters are provided
+    if not (product_id or product_sku or variant_sku):
+        return jsonify({"error": "Please provide product_id, product_sku, or variant_sku"}), 400
+
+    # Construct the request URL based on the provided parameter
+    if product_id:
+        url = f"{CJ_API_BASE_URL}product/query?pid={product_id}"
+    elif product_sku:
+        url = f"{CJ_API_BASE_URL}product/query?productSku={product_sku}"
+    elif variant_sku:
+        url = f"{CJ_API_BASE_URL}product/query?variantSku={variant_sku}"
+
+    # Make a request to CJ Dropshipping's product details API
+    headers = {
+        "CJ-Access-Token": f"{CJ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        product_data = response.json()
+        return jsonify(product_data)
+    else:
+        return jsonify({"error": "Failed to retrieve product details"}), response.status_code
 
 
-def send_email(to_email, subject, message):
-    # Configure your SMTP server settings
-    smtp_server = "smtp.example.com"
-    smtp_port = 587
-    smtp_username = "your_username"
-    smtp_password = "your_password"
+# Endpoint to create an order on cj dropshipping
+@app.route("/create_order", methods=["POST"])
+def create_order():
+    # Extract data from the request
+    data = request.json
 
-    # Create and send the email
-    from_email = "your_email@example.com"
-    msg = MIMEText(message)
-    msg["Subject"] = subject
-    msg["From"] = from_email
-    msg["To"] = to_email
+    # Check if required parameters are provided
+    required_params = [
+        "orderNumber",
+        "shippingCountryCode",
+        "shippingCountry",
+        "shippingProvince",
+        "shippingCity",
+        "shippingAddress",
+        "shippingAddress2",
+        "shippingCustomerName",
+        "shippingZip",
+        "shippingPhone",
+        "logisticName",
+        "fromCountryCode",
+        "products",
+        "vid",
+        "quantity",
+        "shippingName",
+    ]
 
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        server.sendmail(from_email, to_email, msg.as_string())
-        server.quit()
-        print(f"Email sent to {to_email}")
-    except Exception as e:
-        print(f"Email sending failed: {str(e)}")
+    for param in required_params:
+        if param not in data:
+            return jsonify({"error": f"Missing required parameter: {param}"}), 400
 
+    # Optional parameters
+    remark = data.get("remark")
+    houseNumber = data.get("houseNumber")
+    email = data.get("email")
+
+    # Construct the request URL
+    url = f"{CJ_API_BASE_URL}shopping/order/createOrder"
+
+    # Construct the order data
+    order_data = {
+        "orderNumber": data["orderNumber"],
+        "shippingCountryCode": data["shippingCountryCode"],
+        "shippingCountry": data["shippingCountry"],
+        "shippingProvince": data["shippingProvince"],
+        "shippingCity": data["shippingCity"],
+        "shippingAddress": data["shippingAddress"],
+        "shippingAddress2": data["shippingAddress2"],
+        "shippingCustomerName": data["shippingCustomerName"],
+        "shippingZip": data["shippingZip"],
+        "shippingPhone": data["shippingPhone"],
+        "logisticName": data["logisticName"],
+        "fromCountryCode": data["fromCountryCode"],
+        "products": data["products"],
+        "vid": data["vid"],
+        "quantity": data["quantity"],
+        "shippingName": data["shippingName"],
+    }
+
+    # Add optional parameters if provided
+    if remark:
+        order_data["remark"] = remark
+    if houseNumber:
+        order_data["houseNumber"] = houseNumber
+    if email:
+        order_data["email"] = email
+
+    # Make a POST request to CJ Dropshipping's create order API
+    headers = {
+        "Authorization": f"{CJ_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.post(url, json=order_data, headers=headers)
+
+    if response.status_code == 200:
+        order_response = response.json()
+        return jsonify(order_response)
+    else:
+        return jsonify({"error": "Failed to create the order"}), response.status_code
+    
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
