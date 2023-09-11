@@ -21,7 +21,7 @@ from marshmallow import Schema, fields, validate, validates, ValidationError
 # CJ Dropshipping API Base URL
 CJ_API_BASE_URL = os.environ.get("CJ_API_BASE_URL")
 
-CJ_API_KEY = os.environ.get("CJ_API_KEY")
+CJ_API_KEY = os.environ.get("CJ_ACCESS_TOKEN")
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -396,37 +396,37 @@ def convert_currency():
 
 
 
-@app.route('/collect_payment', methods=['POST'])
-def collect_payment():
-    data = request.json
+# @app.route('/collect_payment', methods=['POST'])
+# def collect_payment():
+#     data = request.json
 
-    # Assume data includes 'card_number', 'expiration_date', 'cvv', etc.
-    card_number = data['card_number']
-    expiration_date = data['expiration_date']
-    cvv = data['cvv']
+#     # Assume data includes 'card_number', 'expiration_date', 'cvv', etc.
+#     card_number = data['card_number']
+#     expiration_date = data['expiration_date']
+#     cvv = data['cvv']
 
-    # Encrypt payment information
-    payment_info = f"{card_number}|{expiration_date}|{cvv}"
-    encrypted_payment = cipher_suite.encrypt(payment_info.encode())
+#     # Encrypt payment information
+#     payment_info = f"{card_number}|{expiration_date}|{cvv}"
+#     encrypted_payment = cipher_suite.encrypt(payment_info.encode())
 
-    # Store encrypted payment information (insecure for demonstration purposes)
-    encrypted_payments[data['user_id']] = encrypted_payment
+#     # Store encrypted payment information (insecure for demonstration purposes)
+#     encrypted_payments[data['user_id']] = encrypted_payment
 
-    return jsonify({"message": "Payment information collected and encrypted."})
+#     return jsonify({"message": "Payment information collected and encrypted."})
 
-@app.route('/get_payment/<user_id>', methods=['GET'])
-def get_payment(user_id):
-    if user_id in encrypted_payments:
-        encrypted_payment = encrypted_payments[user_id]
-        decrypted_payment_info = cipher_suite.decrypt(encrypted_payment).decode()
-        card_number, expiration_date, cvv = decrypted_payment_info.split('|')
-        return jsonify({
-            "card_number": card_number[-4:],  # Display only the last 4 digits
-            "expiration_date": expiration_date,
-            "cvv": cvv[-3:],  # Display only the last 3 digits
-        })
-    else:
-        return jsonify({"message": "Payment information not found."}), 404
+# @app.route('/get_payment/<user_id>', methods=['GET'])
+# def get_payment(user_id):
+#     if user_id in encrypted_payments:
+#         encrypted_payment = encrypted_payments[user_id]
+#         decrypted_payment_info = cipher_suite.decrypt(encrypted_payment).decode()
+#         card_number, expiration_date, cvv = decrypted_payment_info.split('|')
+#         return jsonify({
+#             "card_number": card_number[-4:],  # Display only the last 4 digits
+#             "expiration_date": expiration_date,
+#             "cvv": cvv[-3:],  # Display only the last 3 digits
+#         })
+#     else:
+#         return jsonify({"message": "Payment information not found."}), 404
 
 # @app.route('/order/<string:order_id>/status', methods=['GET', 'PUT'])
 # def order_status(order_id):
@@ -555,10 +555,10 @@ CJ_API_KEY = "your_api_key"
 
 # Endpoint to retrieve all products from cj dropshipping
 @app.route("/get_cj_products", methods=["GET"])
-def get_products():
+def get_cj_products():
     # Make a request to CJ Dropshipping's product list API
     headers = {
-        "CJ-Access-Token": f"{CJ_API_KEY}",
+        "CJ-Access-Token": f"{CJ_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
     
@@ -572,7 +572,7 @@ def get_products():
 
 # Endpoint to retrieve a product's details by ID, Product SKU, or Variant SKU on CJ dropshipping
 @app.route("/get_cj_product_details", methods=["GET"])
-def get_product_details():
+def get_cj_product_details():
     # Get the product ID, Product SKU, or Variant SKU from the query parameters
     product_id = request.args.get("product_id")
     product_sku = request.args.get("product_sku")
@@ -592,7 +592,7 @@ def get_product_details():
 
     # Make a request to CJ Dropshipping's product details API
     headers = {
-        "CJ-Access-Token": f"{CJ_API_KEY}",
+        "CJ-Access-Token": f"{CJ_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
     
@@ -606,8 +606,8 @@ def get_product_details():
 
 
 # Endpoint to create an order on cj dropshipping
-@app.route("/create_order", methods=["POST"])
-def create_order():
+@app.route("/create_cj_order", methods=["POST"])
+def create_cj_order():
     # Extract data from the request
     data = request.json
 
@@ -673,7 +673,7 @@ def create_order():
 
     # Make a POST request to CJ Dropshipping's create order API
     headers = {
-        "Authorization": f"{CJ_API_KEY}",
+        "Authorization": f"{CJ_ACCESS_TOKEN}",
         "Content-Type": "application/json",
     }
 
