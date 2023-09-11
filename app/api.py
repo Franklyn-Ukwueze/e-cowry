@@ -21,7 +21,7 @@ from marshmallow import Schema, fields, validate, validates, ValidationError
 # CJ Dropshipping API Base URL
 CJ_API_BASE_URL = os.environ.get("CJ_API_BASE_URL")
 
-CJ_API_KEY = os.environ.get("CJ_ACCESS_TOKEN")
+CJ_ACCESS_TOKEN = os.environ.get("CJ_ACCESS_TOKEN")
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -684,6 +684,57 @@ def create_cj_order():
         return jsonify(order_response)
     else:
         return jsonify({"error": "Failed to create the order"}), response.status_code
+
+@app.route('/get_bb_products', methods=['GET'])
+def get_products():
+    try:
+        # Make a GET request to the BigBuy Products API
+        response = requests.get(
+            f"{BIGBUY_API_URL}/v2/catalog/products",
+            headers={"Authorization": f"Bearer {BIGBUY_API_KEY}"}
+        )
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Parse the JSON response
+            data = response.json()
+            products = data.get('products', [])
+
+            # Return the list of products as JSON
+            return jsonify({"products": products})
+
+        # If the request was not successful, return an error message
+        else:
+            return jsonify({"error": "Failed to fetch products from BigBuy API"}), response.status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
+    @app.route('/get_product_details', methods=['GET'])
+    def get_product_details():
+        sku = request.args.get('sku')
+
+        if not sku:
+            return jsonify({'error': 'SKU parameter is required'}), 400
+
+        # Prepare headers with API key
+        headers = {
+            'Authorization': f'Bearer {BIGBUY_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+
+        # Make a GET request to BigBuy API to retrieve product details
+        try:
+            response = requests.get(f'{BIGBUY_API_URL}/catalog/products/{sku}', headers=headers)
+
+            if response.status_code == 200:
+                product_details = response.json()
+                return jsonify(product_details), 200
+            else:
+                return jsonify({'error': 'Failed to retrieve product details'}), response.status_code
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
