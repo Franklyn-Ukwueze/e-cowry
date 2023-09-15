@@ -557,8 +557,9 @@ def get_cj_products():
         "CJ-Access-Token": f"{CJ_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
+    payload = request.json
     try:
-        response = requests.get(f"{CJ_API_BASE_URL}/product/list", headers=headers)
+        response = requests.get(f"{CJ_API_BASE_URL}/product/list", headers=headers, json=payload)
         
         if response.status_code == 200:
             products_data = response.json()
