@@ -695,6 +695,27 @@ def create_cj_order():
     except Exception as e:
         return f"Encountered error: {e}"
 
+# BigBuy API endpoint for product list
+BIGBUY_API_URL = "https://api.bigbuy.eu/rest/catalog/products.json"
+
+# Replace with your BigBuy API credentials
+BIGBUY_API_USERNAME = os.environ.get("BIGBUY_API_USERNAME")
+BIGBUY_API_PASSWORD = os.environ.get("BIGBUY_API_USERNAME")
+
+@app.route("/bb_products", methods=["GET"])
+def get_bb_products():
+    try:
+        # Make a request to BigBuy API to fetch product data
+        response = requests.get(BIGBUY_API_URL, auth=(BIGBUY_API_USERNAME, BIGBUY_API_PASSWORD))
+
+        if response.status_code == 200:
+            data = response.json()
+            products = data.get("products", [])
+            return jsonify({"products": products})
+        else:
+            return jsonify({"error": "Unable to fetch products from BigBuy API"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
