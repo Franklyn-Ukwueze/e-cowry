@@ -716,6 +716,30 @@ def get_bb_products():
             return jsonify({"error": "Unable to fetch products from BigBuy API"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# Define BigBuy API base URL and your API key
+BIGBUY_API_BASE_URL = "https://api.bigbuy.eu/"
+BIGBUY_API_KEY =  os.environ.get("BIGBUY_API_KEY")
+    
+# Define an endpoint to get product details
+@app.route('/product/<int:product_id>', methods=['GET'])
+def get_product_details(product_id):
+    # Construct the BigBuy API URL for product details
+    product_url = f"{BIGBUY_API_BASE_URL}product/{product_id}.json"
+
+    # Set up headers with your API key
+    headers = {
+        'Api-Key': BIGBUY_API_KEY,
+    }
+
+    # Send a GET request to BigBuy's API
+    response = requests.get(product_url, headers=headers)
+
+    if response.status_code == 200:
+        product_data = response.json()
+        return jsonify(product_data)
+    else:
+        return jsonify({"error": "Product not found"}), 404
 
 
 if __name__ == '__main__':
