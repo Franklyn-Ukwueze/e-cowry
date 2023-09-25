@@ -857,6 +857,29 @@ def get_categories():
     except requests.exceptions.RequestException as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/get_product_variations/<int:product_id>', methods=['GET'])
+def get_product_variations(product_id):
+    try:
+        # Construct the URL with the product ID
+        url = BIGBUY_API_URL.format(product_id=product_id)
+
+        # Set the headers with the API key
+        headers = {
+            'Authorization': f'Bearer {BIGBUY_API_KEY}'
+        }
+
+        # Send a GET request to BigBuy's API
+        response = requests.get(url, headers=headers)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            data = response.json()
+            return jsonify(data)
+        else:
+            return jsonify({"error": "Failed to fetch product variations"}), response.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
