@@ -808,7 +808,37 @@ def get_product_by_sku():
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Error communicating with BigBuy API: {str(e)}"}), 500
 
+@app.route('/get_shipping_cost', methods=['POST'])
+def get_shipping_cost():
+    try:
+        # Extract order details from the request
+        data = request.json
+        order_id = data['order_id']
+        country_iso = data['country_iso']
+        products = data['products']
 
+        # Construct the request payload
+        payload = {
+            'key': BIGBUY_API_KEY,
+            'username': BIGBUY_USERNAME,
+            'order': order_id,
+            'country': country_iso,
+            'products': products,
+        }
+
+        # Send a POST request to BigBuy's shipping API
+        response = requests.post(BIGBUY_SHIPPING_API_URL, json=payload)
+        response_data = response.json()
+
+        # Check if the response contains an error
+        if 'error' in response_data:
+            return jsonify({'error': response_data['error']['message']}), 400
+
+        # Return the response message from BigBuy
+        return jsonify({'message': response_data['message']})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
