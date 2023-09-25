@@ -719,7 +719,7 @@ def get_bb_products():
     
 # Define BigBuy API base URL and your API key
 BIGBUY_API_BASE_URL = "https://api.bigbuy.eu/"
-BIGBUY_API_KEY =  os.environ.get("BIGBUY_API_KEY")
+BIGBUY_API_KEY =  os.environ.get("BIGBUY_API_KEY") 
     
 # Define an endpoint to get product details
 @app.route('/product/<int:product_id>', methods=['GET'])
@@ -741,6 +741,31 @@ def get_product_details(product_id):
     else:
         return jsonify({"error": "Product not found"}), 404
 
+@app.route('/create_order', methods=['POST'])
+def create_order():
+    try:
+        # Parse the request data (adjust this according to your requirements)
+        data = request.json
+
+        # Construct the request headers
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {BIGBUY_API_KEY}"
+        }
+
+        # Make the request to BigBuy's Create Order API
+        response = requests.post(f"{BIGBUY_BASE_URL}/rest/orders", json=data, headers=headers)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            return jsonify({"message": "Order created successfully."}), 200
+
+        # If there's an error, return the error message from BigBuy
+        error_message = response.json().get("message", "Unknown error occurred.")
+        return jsonify({"message": error_message}), response.status_code
+
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
