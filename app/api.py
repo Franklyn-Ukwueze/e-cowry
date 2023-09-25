@@ -782,6 +782,33 @@ def get_product_details():
     except requests.exceptions.RequestException as e:
         return jsonify({'error': 'Failed to retrieve product details from BigBuy API'}), 500
 
+@app.route('/get_product_by_sku', methods=['GET'])
+def get_product_by_sku():
+    sku = request.args.get('sku')
+
+    if not sku:
+        return jsonify({"error": "Missing 'sku' parameter"}), 400
+
+    # Construct the URL for the BigBuy API request
+    url = f"{BIGBUY_API_BASE_URL}/rest/catalog/product/{sku}.json"
+
+    # Set headers with the API key
+    headers = {
+        "Authorization": f"Bearer {BIGBUY_API_KEY}"
+    }
+
+    try:
+        # Send a GET request to BigBuy API
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+
+        # Return the response from BigBuy
+        return jsonify(response.json()), response.status_code
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Error communicating with BigBuy API: {str(e)}"}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
