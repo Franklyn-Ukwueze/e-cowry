@@ -754,7 +754,7 @@ def create_order():
         }
 
         # Make the request to BigBuy's Create Order API
-        response = requests.post(f"{BIGBUY_BASE_URL}/rest/orders", json=data, headers=headers)
+        response = requests.post(f"{BIGBUY_API_BASE_URL}/rest/orders", json=data, headers=headers)
 
         # Check if the request was successful
         if response.status_code == 200:
@@ -766,6 +766,22 @@ def create_order():
 
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+    
+@app.route('/get_product_details', methods=['GET'])
+def get_product_details():
+    try:
+        # Make a GET request to BigBuy's API with the API key
+        response = requests.get(BIGBUY_API_BASE_URL, headers={'Authorization': f'Bearer {BIGBUY_API_KEY}'})
+        response.raise_for_status()  # Raise an exception if the request is not successful
+
+        # Parse the JSON response from BigBuy's API
+        product_details = response.json()
+
+        return jsonify(product_details), 200
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Failed to retrieve product details from BigBuy API'}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
