@@ -839,6 +839,24 @@ def get_shipping_cost():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/categories', methods=['GET'])
+def get_categories():
+    
+    headers = {
+        'Authorization': f'Bearer {BIGBUY_API_KEY}'
+    }
+
+    try:
+        response = requests.get(f'{BIGBUY_API_BASE_URL}/rest/catalog/categories.json'
+    , headers=headers)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        categories = response.json()
+        return jsonify(categories)
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
