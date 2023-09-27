@@ -785,8 +785,7 @@ def get_bb_products():
 
         if response.status_code == 200:
             data = response.json()
-            products = data.get("products", [])
-            return jsonify({"products": products})
+            return jsonify(data)
         else:
             return jsonify({"error": "Unable to fetch products from BigBuy API"}), 500
     except Exception as e:
@@ -868,7 +867,7 @@ def create_order():
 
         # Check if the request was successful
         if response.status_code == 200:
-            return jsonify({"message": "Order created successfully."}), 200
+            return jsonify(response.json), 200
 
         # If there's an error, return the error message from BigBuy
         error_message = response.json().get("message", "Unknown error occurred.")
