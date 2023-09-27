@@ -700,11 +700,41 @@ def create_cj_order():
         return f"Encountered error: {e}"
 
 
-@app.route("/bb_products", methods=["GET"])
+@app.route("/get/bb_products", methods=["GET"])
 def get_bb_products():
     try:
+
+        # Get optional parameters from the query string with default values
+        page = request.args.get('page', 0)
+        page_size = request.args.get('pageSize', 0)
+        parent_taxonomy = request.args.get('parentTaxonomy', 0)
+
+        # Check if parameters can be converted to integers
+        try:
+            page = int(page)
+            page_size = int(page_size)
+            parent_taxonomy = int(parent_taxonomy)
+        except ValueError:
+            return jsonify({"error": "Invalid parameter data type. Parameters must be integers."}), 400
+
+        # Construct the query parameters
+        params = {
+            'page': page,
+            'pageSize': page_size,
+            'parentTaxonomy': parent_taxonomy
+        }
+
         # Make a request to BigBuy API to fetch product data
-        response = requests.get(BIGBUY_API_URL, auth=(BIGBUY_API_USERNAME, BIGBUY_API_PASSWORD))
+        products_url = f"{BIGBUY_API_BASE_URL}/rest/catalog/products.json"
+
+        # Construct the request headers
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {BIGBUY_API_KEY}"
+        }
+
+        # Send a GET request to BigBuy's API
+        response = requests.get(products_url, headers=headers, params=params)
 
         if response.status_code == 200:
             data = response.json()
@@ -723,9 +753,10 @@ def get_product_details(product_id):
     # Construct the BigBuy API URL for product details
     product_url = f"{BIGBUY_API_BASE_URL}product/{product_id}.json"
 
-    # Set up headers with your API key
+    # Construct the request headers
     headers = {
-        'Api-Key': BIGBUY_API_KEY,
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {BIGBUY_API_KEY}"
     }
 
     # Send a GET request to BigBuy's API
