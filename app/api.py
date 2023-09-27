@@ -757,7 +757,7 @@ def get_bb_products():
         #parent_taxonomy = request.json.get('parentTaxonomy', 0)
 
         if not page:
-            page = None
+            page = "0"
         if not page_size:
             page_size = "20"
 
