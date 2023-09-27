@@ -550,22 +550,53 @@ api.add_resource(Home,'/')
 #     except Exception as e:
 #         print(f"Email sending failed: {str(e)}")
 
+#Aendpoint to refresh CJ dropshippinf access token
+@app.route('/cj/refresh_access_token', methods=['POST'])
+def refresh_access_token():
+    try:
+        # Get the 'refreshToken' from the request JSON data
+        request_data = request.json
+        refresh_token = request_data.get('refreshToken')
 
+        if not refresh_token:
+            return jsonify({"error": "Missing 'refreshToken' parameter"}), 400
+        
+        headers = {"Content-Type": "application/json"}
+
+        # Create the request payload
+        data = {
+            "refreshToken": refresh_token
+        }
+
+        # Send a POST request to CJ Dropshipping's API to refresh the access token
+        response = requests.post(f"{CJ_API_BASE_URL}/authentication/refreshAccessToken", json=data, headers=headers)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            response_data = response.json()
+            return jsonify(response_data)
+        else:
+            return jsonify({"error": "Failed to refresh access token"}), response.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Endpoint to retrieve all products from cj dropshipping
 @app.route("/get_cj_products", methods=["GET"])
 def get_cj_products():
-    # Make a request to CJ Dropshipping's product list API
-    headers = {
-        "CJ-Access-Token": f"{CJ_ACCESS_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    if request.json:
-        payload = request.json
-    else:
-        payload = None
     try:
+        CJ_access_token = request.headers.get("CJ-Access-Token")
+
+        # Make a request to CJ Dropshipping's product list API
+        headers = {
+            "CJ-Access-Token": f"{CJ_access_token}",
+            "Content-Type": "application/json"
+        }
+        if request.json:
+            payload = request.json
+        else:
+            payload = None
+    
         response = requests.get(f"{CJ_API_BASE_URL}/product/list", headers=headers, json=payload)
         
         if response.status_code == 200:
@@ -573,8 +604,10 @@ def get_cj_products():
             return jsonify(products_data)
         else:
             return jsonify({"error": "Failed to retrieve products"}), response.status_code
+    
     except Exception as e:
-        return f"Encountered error: {e}"
+            return f"Encountered error: {e}"
+        
 
 
 # Endpoint to retrieve a product's details by ID, Product SKU, or Variant SKU on CJ dropshipping
@@ -584,6 +617,8 @@ def get_cj_product_details():
     product_id = request.json.get("product_id")
     product_sku = request.json.get("product_sku")
     variant_sku = request.json.get("variant_sku")
+    CJ_access_token = request.headers.get("CJ-Access-Token")
+
     try: 
         # Check if any of the parameters are provided
         if not (product_id or product_sku or variant_sku):
@@ -593,13 +628,13 @@ def get_cj_product_details():
         if product_id:
             url = f"{CJ_API_BASE_URL}/product/query?pid={product_id}"
         elif product_sku:
-            url = f"{CJ_API_BASE_URL}product/query?productSku={product_sku}"
+            url = f"{CJ_API_BASE_URL}/product/query?productSku={product_sku}"
         elif variant_sku:
-            url = f"{CJ_API_BASE_URL}product/query?variantSku={variant_sku}"
+            url = f"{CJ_API_BASE_URL}/product/query?variantSku={variant_sku}"
 
         # Make a request to CJ Dropshipping's product details API
         headers = {
-            "CJ-Access-Token": f"{CJ_ACCESS_TOKEN}",
+            "CJ-Access-Token": f"{CJ_access_token}",
             "Content-Type": "application/json"
         }
         
@@ -618,30 +653,36 @@ def get_cj_product_details():
 # Endpoint to create an order on cj dropshipping
 @app.route("/create_cj_order", methods=["POST"])
 def create_cj_order():
-    # Extract data from the request
-    data = request.json
-
-    # Check if required parameters are provided
-    required_params = [
-        "orderNumber",
-        "shippingCountryCode",
-        "shippingCountry",
-        "shippingProvince",
-        "shippingCity",
-        "shippingAddress",
-        "shippingAddress2",
-        "shippingCustomerName",
-        "shippingZip",
-        "shippingPhone",
-        "logisticName",
-        "fromCountryCode",
-        "products",
-        "vid",
-        "quantity",
-        "shippingName",
-    ]
 
     try:
+        # Extract data from the request
+        data = request.json
+
+        CJ_access_token = request.headers.get("CJ-Access-Token")
+
+        if not CJ_access_token:
+                return jsonify({"error": "Missing required header: CJ_access_token"}), 400
+
+        # Check if required parameters are provided
+        required_params = [
+            "orderNumber",
+            "shippingCountryCode",
+            "shippingCountry",
+            "shippingProvince",
+            "shippingCity",
+            "shippingAddress",
+            "shippingAddress2",
+            "shippingCustomerName",
+            "shippingZip",
+            "shippingPhone",
+            "logisticName",
+            "fromCountryCode",
+            "products",
+            "vid",
+            "quantity",
+            "shippingName",
+        ]
+
         for param in required_params:
             if param not in data:
                 return jsonify({"error": f"Missing required parameter: {param}"}), 400
@@ -652,7 +693,7 @@ def create_cj_order():
         email = data.get("email")
 
         # Construct the request URL
-        url = f"{CJ_API_BASE_URL}shopping/order/createOrder"
+        url = f"{CJ_API_BASE_URL}/shopping/order/createOrder"
 
         # Construct the order data
         order_data = {
@@ -677,6 +718,9 @@ def create_cj_order():
         # Add optional parameters if provided
         if remark:
             order_data["remark"] = remark
+        else:
+            order_data["remark"] = "Note"
+
         if houseNumber:
             order_data["houseNumber"] = houseNumber
         if email:
@@ -684,7 +728,7 @@ def create_cj_order():
 
         # Make a POST request to CJ Dropshipping's create order API
         headers = {
-            "Authorization": f"{CJ_ACCESS_TOKEN}",
+            "Authorization": f"{CJ_access_token}",
             "Content-Type": "application/json",
         }
 
@@ -705,9 +749,9 @@ def get_bb_products():
     try:
 
         # Get optional parameters from the query string with default values
-        page = request.args.get('page', 0)
-        page_size = request.args.get('pageSize', 0)
-        parent_taxonomy = request.args.get('parentTaxonomy', 0)
+        page = request.json.get('page', 0)
+        page_size = request.json.get('pageSize', 0)
+        parent_taxonomy = request.json.get('parentTaxonomy', 0)
 
         # Check if parameters can be converted to integers
         try:
@@ -734,7 +778,7 @@ def get_bb_products():
         }
 
         # Send a GET request to BigBuy's API
-        response = requests.get(products_url, headers=headers, params=params)
+        response = requests.get(products_url, headers=headers, json=params)
 
         if response.status_code == 200:
             data = response.json()
@@ -748,31 +792,38 @@ def get_bb_products():
  
     
 # Define an endpoint to get product details
-@app.route('/product/<int:product_id>', methods=['GET'])
+@app.route('/bb_product/<int:product_id>', methods=['GET'])
 def get_product_details(product_id):
-    # Construct the BigBuy API URL for product details
-    product_url = f"{BIGBUY_API_BASE_URL}product/{product_id}.json"
+    try:
+        # Construct the BigBuy API URL for product details
+        product_url = f"{BIGBUY_API_BASE_URL}/rest/catalog/productinformation/{product_id}.json"
 
-    # Construct the request headers
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {BIGBUY_API_KEY}"
-    }
+        # Construct the request headers
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {BIGBUY_API_KEY}"
+        }
 
-    # Send a GET request to BigBuy's API
-    response = requests.get(product_url, headers=headers)
+        # Send a GET request to BigBuy's API
+        response = requests.get(product_url, headers=headers)
 
-    if response.status_code == 200:
-        product_data = response.json()
-        return jsonify(product_data)
-    else:
-        return jsonify({"error": "Product not found"}), 404
+        if response.status_code == 200:
+            product_data = response.json()
+            return jsonify(product_data)
+        else:
+            return jsonify({"error": "Product not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/create_order', methods=['POST'])
+@app.route('/create_bb_order', methods=['POST'])
 def create_order():
     try:
         # Parse the request data (adjust this according to your requirements)
         data = request.json
+
+        # Construct the BigBuy API URL to create order
+        product_url = f"{BIGBUY_API_BASE_URL}/rest/order/create.json"
+
 
         # Construct the request headers
         headers = {
@@ -781,7 +832,7 @@ def create_order():
         }
 
         # Make the request to BigBuy's Create Order API
-        response = requests.post(f"{BIGBUY_API_BASE_URL}/rest/orders", json=data, headers=headers)
+        response = requests.post(url=product_url, json=data, headers=headers)
 
         # Check if the request was successful
         if response.status_code == 200:
@@ -794,20 +845,6 @@ def create_order():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
     
-@app.route('/get_product_details', methods=['GET'])
-def get_product_details():
-    try:
-        # Make a GET request to BigBuy's API with the API key
-        response = requests.get(BIGBUY_API_BASE_URL, headers={'Authorization': f'Bearer {BIGBUY_API_KEY}'})
-        response.raise_for_status()  # Raise an exception if the request is not successful
-
-        # Parse the JSON response from BigBuy's API
-        product_details = response.json()
-
-        return jsonify(product_details), 200
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': 'Failed to retrieve product details from BigBuy API'}), 500
 
 
 
