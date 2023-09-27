@@ -587,6 +587,9 @@ def get_cj_products():
     try:
         CJ_access_token = request.headers.get("CJ-Access-Token")
 
+        if not CJ_access_token:
+            return jsonify({"error": "Missing required header: CJ_access_token"}), 400
+
         # Make a request to CJ Dropshipping's product list API
         headers = {
             "CJ-Access-Token": f"{CJ_access_token}",
