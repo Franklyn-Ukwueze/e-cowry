@@ -752,8 +752,8 @@ def get_bb_products():
     try:
 
         # Get optional parameters from the query string with default values
-        page = request.json.get('page', 0)
-        page_size = request.json.get('pageSize', 20)
+        page = request.json.get('page')
+        page_size = request.json.get('pageSize')
         parent_taxonomy = request.json.get('parentTaxonomy', 0)
 
         if not page:
