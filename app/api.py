@@ -34,7 +34,7 @@ CJ_API_BASE_URL = os.environ.get("CJ_API_BASE_URL")
 CJ_ACCESS_TOKEN = os.environ.get("CJ_ACCESS_TOKEN")
 
 # Define BigBuy API base URL and your API key
-BIGBUY_API_BASE_URL = "https://api.bigbuy.eu/"
+BIGBUY_API_BASE_URL = os.environ.get("BIGBUY_API_BASE_URL")
 BIGBUY_API_KEY =  os.environ.get("BIGBUY_API_KEY")
 
 myclient = pymongo.MongoClient(mongo_uri)
