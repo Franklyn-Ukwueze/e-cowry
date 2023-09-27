@@ -831,7 +831,7 @@ def create_order():
         # Check for required parameters
         required_params = ["paymentMethod", "shippingAddress", "products"]
         for param in required_params:
-            if param not in request_data:
+            if param not in request_data.get("order"):
                 return jsonify({"error": f"Required parameter '{param}' is missing"}), 400
 
         # Define the order data
