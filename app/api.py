@@ -754,13 +754,13 @@ def get_bb_products():
         # Get optional parameters from the query string with default values
         page = request.json.get('page', 0)
         page_size = request.json.get('pageSize', 20)
-        parent_taxonomy = request.json.get('parentTaxonomy', 0)
+        #parent_taxonomy = request.json.get('parentTaxonomy', 0)
 
         # Check if parameters can be converted to integers
         try:
             page = int(page)
             page_size = int(page_size)
-            parent_taxonomy = int(parent_taxonomy)
+            #parent_taxonomy = int(parent_taxonomy)
         except ValueError:
             return jsonify({"error": "Invalid parameter data type. Parameters must be integers."}), 400
 
@@ -768,7 +768,6 @@ def get_bb_products():
         params = {
             'page': page,
             'pageSize': page_size,
-            'parentTaxonomy': parent_taxonomy
         }
 
         # Make a request to BigBuy API to fetch product data
@@ -781,7 +780,7 @@ def get_bb_products():
         }
 
         # Send a GET request to BigBuy's API
-        response = requests.get(products_url, headers=headers, json=params)
+        response = requests.get(products_url, headers=headers, params=params)
 
         if response.status_code == 200:
             data = response.json()
