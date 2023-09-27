@@ -582,7 +582,7 @@ def refresh_access_token():
 
 
 # Endpoint to retrieve all products from cj dropshipping
-@app.route("/get_cj_products", methods=["GET"])
+@app.route("/cj/get/products", methods=["GET"])
 def get_cj_products():
     try:
         CJ_access_token = request.headers.get("CJ-Access-Token")
@@ -614,7 +614,7 @@ def get_cj_products():
 
 
 # Endpoint to retrieve a product's details by ID, Product SKU, or Variant SKU on CJ dropshipping
-@app.route("/get_cj_product_details", methods=["GET"])
+@app.route("/cj/get/product_details", methods=["GET"])
 def get_cj_product_details():
     # Get the product ID, Product SKU, or Variant SKU from the query parameters
     product_id = request.json.get("product_id")
@@ -654,7 +654,7 @@ def get_cj_product_details():
 
 
 # Endpoint to create an order on cj dropshipping
-@app.route("/create_cj_order", methods=["POST"])
+@app.route("/cj/create_order", methods=["POST"])
 def create_cj_order():
 
     try:
@@ -747,7 +747,7 @@ def create_cj_order():
         return f"Encountered error: {e}"
 
 
-@app.route("/get/bb_products", methods=["GET"])
+@app.route("/bb/get/products", methods=["GET"])
 def get_bb_products():
     try:
 
@@ -795,7 +795,7 @@ def get_bb_products():
  
     
 # Define an endpoint to get product details
-@app.route('/bb_product/<int:product_id>', methods=['GET'])
+@app.route('/bb/get/product_details/<int:product_id>', methods=['GET'])
 def get_product_details(product_id):
     try:
         # Construct the BigBuy API URL for product details
@@ -818,11 +818,40 @@ def get_product_details(product_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/create_bb_order', methods=['POST'])
+@app.route('/bb/create_order', methods=['POST'])
 def create_order():
     try:
-        # Parse the request data (adjust this according to your requirements)
-        data = request.json
+        # Parse the request data
+        request_data = request.json
+
+        # Check for required parameters
+        required_params = ["paymentMethod", "shippingAddress", "products"]
+        for param in required_params:
+            if param not in request_data:
+                return jsonify({"error": f"Required parameter '{param}' is missing"}), 400
+
+        # Define the order data
+        order_data = {
+            "internalReference": request_data.get("internalReference"),
+            "language": request_data.get("language"),
+            "paymentMethod": request_data["paymentMethod"],
+            "carriers": request_data.get("carriers", []),
+            "shippingAddress": {
+                "firstName": request_data["shippingAddress"]["firstName"],
+                "lastName": request_data["shippingAddress"]["lastName"],
+                "country": request_data["shippingAddress"]["country"],
+                "postcode": request_data["shippingAddress"]["postcode"],
+                "town": request_data["shippingAddress"]["town"],
+                "address": request_data["shippingAddress"]["address"],
+                "phone": request_data["shippingAddress"]["phone"],
+                "email": request_data["shippingAddress"]["email"],
+                "vatNumber": request_data.get("shippingAddress", {}).get("vatNumber"),
+                "companyName": request_data.get("shippingAddress", {}).get("companyName"),
+                "comment": request_data.get("shippingAddress", {}).get("comment")
+            },
+            "products": request_data["products"]
+        }
+
 
         # Construct the BigBuy API URL to create order
         product_url = f"{BIGBUY_API_BASE_URL}/rest/order/create.json"
@@ -835,7 +864,7 @@ def create_order():
         }
 
         # Make the request to BigBuy's Create Order API
-        response = requests.post(url=product_url, json=data, headers=headers)
+        response = requests.post(url=product_url, json=order_data, headers=headers)
 
         # Check if the request was successful
         if response.status_code == 200:
