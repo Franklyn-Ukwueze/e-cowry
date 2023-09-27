@@ -835,7 +835,7 @@ def create_order():
                 return jsonify({"error": f"Required parameter '{param}' is missing"}), 400
 
         # Define the order data
-        order_data = {
+        order_data = {"order":{
             "internalReference": request_data.get("internalReference"),
             "language": request_data.get("language"),
             "paymentMethod": request_data["paymentMethod"],
@@ -854,7 +854,7 @@ def create_order():
                 "comment": request_data.get("shippingAddress", {}).get("comment")
             },
             "products": request_data["products"]
-        }
+        }}
 
 
         # Construct the BigBuy API URL to create order
