@@ -33,6 +33,10 @@ CJ_API_BASE_URL = os.environ.get("CJ_API_BASE_URL")
 
 CJ_ACCESS_TOKEN = os.environ.get("CJ_ACCESS_TOKEN")
 
+# Define BigBuy API base URL and your API key
+BIGBUY_API_BASE_URL = "https://api.bigbuy.eu/"
+BIGBUY_API_KEY =  os.environ.get("BIGBUY_API_KEY")
+
 myclient = pymongo.MongoClient(mongo_uri)
 mydb = myclient["cowry"]
 
@@ -152,247 +156,247 @@ class Home(Resource):
 api.add_resource(Home,'/')
 
 
-@app.route('/add_to_cart', methods=['POST'])
-@cowry_token_required
-def add_to_cart():
-    try:
-        # Retrieve user account information from request
-        user_id = request.json.get('user_id')
-        # Get the item details from the request body
-        product_id = request.json.get('product_id')
-        quantity = request.json.get('quantity')
+# @app.route('/add_to_cart', methods=['POST'])
+# @cowry_token_required
+# def add_to_cart():
+#     try:
+#         # Retrieve user account information from request
+#         user_id = request.json.get('user_id')
+#         # Get the item details from the request body
+#         product_id = request.json.get('product_id')
+#         quantity = request.json.get('quantity')
 
-        if not user_id or not product_id:
-            return jsonify({'error': 'Invalid request. Please provide user_id and product_id.'}), 400
+#         if not user_id or not product_id:
+#             return jsonify({'error': 'Invalid request. Please provide user_id and product_id.'}), 400
         
-        cart = carts.find_one({}, {f"{user_id}" : True})
+#         cart = carts.find_one({}, {f"{user_id}" : True})
 
-        # Check if the user has an existing cart
-        if not cart:
-            new_cart = {f"{user_id}" : True, "items": [{"product_id" : f"{product_id}", "quantitiy": quantity} ]}
-            carts.insert_one(new_cart)
+#         # Check if the user has an existing cart
+#         if not cart:
+#             new_cart = {f"{user_id}" : True, "items": [{"product_id" : f"{product_id}", "quantitiy": quantity} ]}
+#             carts.insert_one(new_cart)
 
-        elif cart:
-            filter = {f"{user_id}" : True}
-            new_items = [{"product_id" : f"{product_id}", "quantitiy": quantity}]
-            update = {"$push": {"items":{"$each": new_items}}}
+#         elif cart:
+#             filter = {f"{user_id}" : True}
+#             new_items = [{"product_id" : f"{product_id}", "quantitiy": quantity}]
+#             update = {"$push": {"items":{"$each": new_items}}}
 
-            # Update the record in the collection
-            carts.update_one(filter, update)
+#             # Update the record in the collection
+#             carts.update_one(filter, update)
 
         
 
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return jsonify({'message': 'Item added to cart successfully.'}), 200
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return jsonify({'message': 'Item added to cart successfully.'}), 200
 
-@app.route('/submit_order', methods=['POST'])
-@cowry_token_required
-def submit_order():
-    # Get the order details from the request
-    user_id = request.json.get("user_id")
-    items = request.json.get("items")
-    total_cost = request.json.get("total_cost")
+# @app.route('/submit_order', methods=['POST'])
+# @cowry_token_required
+# def submit_order():
+#     # Get the order details from the request
+#     user_id = request.json.get("user_id")
+#     items = request.json.get("items")
+#     total_cost = request.json.get("total_cost")
 
-    order_id = str(random.randint(100000000000, 999999999999))
-    data = orders.find_one({}, {"order_id": order_id})
+#     order_id = str(random.randint(100000000000, 999999999999))
+#     data = orders.find_one({}, {"order_id": order_id})
 
-    while data:
-        order_id = random.randint(100000000000, 999999999999)
+#     while data:
+#         order_id = random.randint(100000000000, 999999999999)
 
-    order_data = {"user_id" : f"{user_id}", "order_id" : f"{order_id}", "date" : current_date, "items" : items, "total_cost" : total_cost}
+#     order_data = {"user_id" : f"{user_id}", "order_id" : f"{order_id}", "date" : current_date, "items" : items, "total_cost" : total_cost}
 
-    orders.insert_one(order_data)
+#     orders.insert_one(order_data)
 
-    response = {
-        'status': 'success',
-        'message': 'Order submitted successfully!'
-    }
-    return jsonify(response)
+#     response = {
+#         'status': 'success',
+#         'message': 'Order submitted successfully!'
+#     }
+#     return jsonify(response)
 
-@app.route('/brandsgateway/add_product', methods=['POST'])
-@cowry_token_required
-def brandsgateway_add_product():
-    try:
-        data = request.get_json()
-        payload = BrandsGateway().load(data)
+# @app.route('/brandsgateway/add_product', methods=['POST'])
+# @cowry_token_required
+# def brandsgateway_add_product():
+#     try:
+#         data = request.get_json()
+#         payload = BrandsGateway().load(data)
 
-        product_details = {"supplier_id" : 1,"product_type" : payload["product_type"], "group_sku" : payload["group_sku"],
-                            "variation_type" : payload["variation_type"], "product_sku" : payload["product_sku"],
-                              "brand" : payload["brand"], "name" : payload["name"], "retail_price" : payload["retail_price"],
-                                "wholesale_price" : payload["wholesale_price"], "description" : payload["description"], "description_plain" : payload["description_plain"],
-                                  "main_picture" : payload["main_picture"], "other_pictures" : payload["other_pictures"], "gender" : payload["gender"],
-                                        "category" : payload["category"], "subcategory" : payload["subcategory"], "size" : payload["size"],
-                                          "quantity" : payload["quantity"], "color" : payload["color"], "material" : payload["material"], 
-                                            "product_id" : payload["product_id"], "size_slug" : payload["size_slug"], "weight" : payload["weight"],
-                                              "location" : payload["location"], "currency" : payload["currency"]}
+#         product_details = {"supplier_id" : 1,"product_type" : payload["product_type"], "group_sku" : payload["group_sku"],
+#                             "variation_type" : payload["variation_type"], "product_sku" : payload["product_sku"],
+#                               "brand" : payload["brand"], "name" : payload["name"], "retail_price" : payload["retail_price"],
+#                                 "wholesale_price" : payload["wholesale_price"], "description" : payload["description"], "description_plain" : payload["description_plain"],
+#                                   "main_picture" : payload["main_picture"], "other_pictures" : payload["other_pictures"], "gender" : payload["gender"],
+#                                         "category" : payload["category"], "subcategory" : payload["subcategory"], "size" : payload["size"],
+#                                           "quantity" : payload["quantity"], "color" : payload["color"], "material" : payload["material"], 
+#                                             "product_id" : payload["product_id"], "size_slug" : payload["size_slug"], "weight" : payload["weight"],
+#                                               "location" : payload["location"], "currency" : payload["currency"]}
 
-        supplier_products.insert_one(product_details)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return jsonify({'message': 'product added successfully.'}), 200
+#         supplier_products.insert_one(product_details)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return jsonify({'message': 'product added successfully.'}), 200
     
-@app.route('/tradeeasy/add_product', methods=['POST'])
-@cowry_token_required
-def tradeeasy_add_product():
-    try:
-        data = request.get_json()
-        payload = TradeEasy().load(data)
+# @app.route('/tradeeasy/add_product', methods=['POST'])
+# @cowry_token_required
+# def tradeeasy_add_product():
+#     try:
+#         data = request.get_json()
+#         payload = TradeEasy().load(data)
 
-        product_details = {"supplier_id" : 2, "image" : payload["image"], "article" : payload["article"],
-                            "model" : payload["model"],  "category" : payload["category"], "size" : payload["size"],
-                              "quantity" : payload["quantity"], "price" : payload["price"], "retail_price" : payload["retail_price"], "gender" : payload["gender"],
-                               "other_pictures" : payload["other_pictures"], "currency" : payload["currency"]}
+#         product_details = {"supplier_id" : 2, "image" : payload["image"], "article" : payload["article"],
+#                             "model" : payload["model"],  "category" : payload["category"], "size" : payload["size"],
+#                               "quantity" : payload["quantity"], "price" : payload["price"], "retail_price" : payload["retail_price"], "gender" : payload["gender"],
+#                                "other_pictures" : payload["other_pictures"], "currency" : payload["currency"]}
 
-        supplier_products.insert_one(product_details)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return jsonify({'message': 'product added successfully.'}), 200
+#         supplier_products.insert_one(product_details)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return jsonify({'message': 'product added successfully.'}), 200
 
-@app.route('/dncwholesale/add_product', methods=['POST'])
-@cowry_token_required
-def dncwholesale_add_product():
-    try:
-        data = request.get_json()
-        payload = DNCWholesale().load(data)
+# @app.route('/dncwholesale/add_product', methods=['POST'])
+# @cowry_token_required
+# def dncwholesale_add_product():
+#     try:
+#         data = request.get_json()
+#         payload = DNCWholesale().load(data)
 
-        product_details = {"supplier_id" : 3, "store" : payload["store"], "lot" : payload["lot"],
-                            "merch_category" : payload["merch_category"], "wholesale_quantity" : payload["wholesale_quantity"],
-                              "color" : payload["color"], "brand" : payload["brand"], "retail_price" : payload["retail_price"],
-                                "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
-                                  "size" : payload["size"], "image" : payload["image"],
-                                   "other_pictures" : payload["other_pictures"],
-                                    "quantity" : payload["quantity"], "currency" : payload["currency"]}
+#         product_details = {"supplier_id" : 3, "store" : payload["store"], "lot" : payload["lot"],
+#                             "merch_category" : payload["merch_category"], "wholesale_quantity" : payload["wholesale_quantity"],
+#                               "color" : payload["color"], "brand" : payload["brand"], "retail_price" : payload["retail_price"],
+#                                 "wholesale_price" : payload["wholesale_price"], "description" : payload["description"],
+#                                   "size" : payload["size"], "image" : payload["image"],
+#                                    "other_pictures" : payload["other_pictures"],
+#                                     "quantity" : payload["quantity"], "currency" : payload["currency"]}
 
-        supplier_products.insert_one(product_details)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return jsonify({'message': 'product added successfully.'}), 200
+#         supplier_products.insert_one(product_details)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return jsonify({'message': 'product added successfully.'}), 200
 
-@app.route('/xmbo/add_product', methods=['POST'])
-@cowry_token_required
-def xmbo_add_product():
-    try:
-        data = request.get_json()
-        payload = XMBO().load(data)
+# @app.route('/xmbo/add_product', methods=['POST'])
+# @cowry_token_required
+# def xmbo_add_product():
+#     try:
+#         data = request.get_json()
+#         payload = XMBO().load(data)
 
-        product_details = {"supplier_id" : 4, "image" : payload["image"], "ref" : payload["ref"],
-                            "brand" : payload["brand"], "ean" : payload["ean"], "other_pictures" : payload["other_pictures"],
-                              "hs" : payload["hs"], "material" : payload["material"], "made_in" : payload["made_in"],
-                                "retail_price" : payload["retail_price"], "description" : payload["description"],
-                                  "quantity" : payload["quantity"], "price" : payload["price"],
-                                    "article" : payload["article"], "currency" : payload["currency"]}
+#         product_details = {"supplier_id" : 4, "image" : payload["image"], "ref" : payload["ref"],
+#                             "brand" : payload["brand"], "ean" : payload["ean"], "other_pictures" : payload["other_pictures"],
+#                               "hs" : payload["hs"], "material" : payload["material"], "made_in" : payload["made_in"],
+#                                 "retail_price" : payload["retail_price"], "description" : payload["description"],
+#                                   "quantity" : payload["quantity"], "price" : payload["price"],
+#                                     "article" : payload["article"], "currency" : payload["currency"]}
 
-        supplier_products.insert_one(product_details)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return jsonify({'message': 'product added successfully.'}), 200
+#         supplier_products.insert_one(product_details)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return jsonify({'message': 'product added successfully.'}), 200
     
-@app.route('/get/products', methods=['GET', 'POST'])
-@cowry_token_required
-def get_products():
-    try:
-        data = supplier_products.find({},{ "_id": 0})
-        product_list = list()
-        for i in data:
-            product_list.append(i)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
+# @app.route('/get/products', methods=['GET', 'POST'])
+# @cowry_token_required
+# def get_products():
+#     try:
+#         data = supplier_products.find({},{ "_id": 0})
+#         product_list = list()
+#         for i in data:
+#             product_list.append(i)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
 
-@app.route('/supplier/register', methods=['POST'])
-@cowry_token_required
-def register_supplier():
-    try:
-        data = request.get_json()
-        payload = RegisterSupplier().load(data)
+# @app.route('/supplier/register', methods=['POST'])
+# @cowry_token_required
+# def register_supplier():
+#     try:
+#         data = request.get_json()
+#         payload = RegisterSupplier().load(data)
 
-        # Find the maximum supplier ID
-        max_supplier_id = suppliers.find_one(sort=[("supplier_id", -1)])
-        if max_supplier_id:
-            supplier_id = max_supplier_id['supplier_id'] + 1
-        else:
-            supplier_id = 1
+#         # Find the maximum supplier ID
+#         max_supplier_id = suppliers.find_one(sort=[("supplier_id", -1)])
+#         if max_supplier_id:
+#             supplier_id = max_supplier_id['supplier_id'] + 1
+#         else:
+#             supplier_id = 1
 
-        supplier_details = {"supplier_id" : supplier_id, "supplier_name" : payload["supplier_name"],
-                        "location" : payload["location"], "contact_address" : payload["contact_address"],
-                         "email" : payload["email"], "phone" : payload["phone"] }
+#         supplier_details = {"supplier_id" : supplier_id, "supplier_name" : payload["supplier_name"],
+#                         "location" : payload["location"], "contact_address" : payload["contact_address"],
+#                          "email" : payload["email"], "phone" : payload["phone"] }
         
-        suppliers.insert_one(supplier_details)
+#         suppliers.insert_one(supplier_details)
         
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return {"status": True, "message": f"{payload['supplier_name']} has been registered with supplier ID {supplier_id}", "data":supplier_id}, 200
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return {"status": True, "message": f"{payload['supplier_name']} has been registered with supplier ID {supplier_id}", "data":supplier_id}, 200
 
-@app.route('/get/suppliers', methods=['GET', 'POST'])
-@cowry_token_required
-def get_suppliers():
-    try:
-        data = suppliers.find({},{ "_id": 0})
-        supplier_list = list()
-        for i in data:
-            supplier_list.append(i)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return {"status": True, "message":"Suppliers have been retrieved successfully", "data": supplier_list }, 200
+# @app.route('/get/suppliers', methods=['GET', 'POST'])
+# @cowry_token_required
+# def get_suppliers():
+#     try:
+#         data = suppliers.find({},{ "_id": 0})
+#         supplier_list = list()
+#         for i in data:
+#             supplier_list.append(i)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return {"status": True, "message":"Suppliers have been retrieved successfully", "data": supplier_list }, 200
 
-@app.route('/get/<string:supplier_id>/products', methods=['GET', 'POST'])
-@cowry_token_required
-def get_supplier_products(supplier_id):
-    try:
-        data = supplier_products.find({"supplier_id" : int(supplier_id)},{ "_id": 0,})
-        product_list = list()
-        for i in data:
-            product_list.append(i)
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
+# @app.route('/get/<string:supplier_id>/products', methods=['GET', 'POST'])
+# @cowry_token_required
+# def get_supplier_products(supplier_id):
+#     try:
+#         data = supplier_products.find({"supplier_id" : int(supplier_id)},{ "_id": 0,})
+#         product_list = list()
+#         for i in data:
+#             product_list.append(i)
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return {"status": True, "message":"Products have been retrieved successfully", "data": product_list }, 200
 
-@app.route('/convert_currency', methods=['POST'])
-@cowry_token_required
-def convert_currency():
+# @app.route('/convert_currency', methods=['POST'])
+# @cowry_token_required
+# def convert_currency():
     
-    try:
-        # Retrieve request data
-        data = request.get_json()
-        amount = data.get('amount')
-        amount = float(amount)
-        base_currency = data.get('base_currency')
-        target_currency = data.get('target_currency')
+#     try:
+#         # Retrieve request data
+#         data = request.get_json()
+#         amount = data.get('amount')
+#         amount = float(amount)
+#         base_currency = data.get('base_currency')
+#         target_currency = data.get('target_currency')
 
-        # Make API call to convert currency
-        api_key = os.environ.get("CONVERSION_API_KEY")
-        url = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency={}&to_currency={}&apikey={}".format(
-                base_currency, target_currency, api_key)
-        response = requests.get(url)
-        response = response.json()
-        exchange_rate = response["Realtime Currency Exchange Rate"].get("5. Exchange Rate")
-        exchange_rate = float(exchange_rate)
+#         # Make API call to convert currency
+#         api_key = os.environ.get("CONVERSION_API_KEY")
+#         url = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency={}&to_currency={}&apikey={}".format(
+#                 base_currency, target_currency, api_key)
+#         response = requests.get(url)
+#         response = response.json()
+#         exchange_rate = response["Realtime Currency Exchange Rate"].get("5. Exchange Rate")
+#         exchange_rate = float(exchange_rate)
         
-        # Check if conversion is successful
-        if exchange_rate:
-            conversion_rate = exchange_rate
-            if conversion_rate:
-                converted_amount = amount * conversion_rate
-                result = {
-                    'amount': amount,
-                    'base_currency': base_currency,
-                    'target_currency': target_currency,
-                    'converted_amount': round(converted_amount, 2)
-                }
-    except Exception as e:
-        return jsonify(message=f"An exception occurred: {e}", status=False)
-    else:
-        return jsonify(status=True, message=f"{base_currency} to {target_currency} successfully.", data=result ), 200
+#         # Check if conversion is successful
+#         if exchange_rate:
+#             conversion_rate = exchange_rate
+#             if conversion_rate:
+#                 converted_amount = amount * conversion_rate
+#                 result = {
+#                     'amount': amount,
+#                     'base_currency': base_currency,
+#                     'target_currency': target_currency,
+#                     'converted_amount': round(converted_amount, 2)
+#                 }
+#     except Exception as e:
+#         return jsonify(message=f"An exception occurred: {e}", status=False)
+#     else:
+#         return jsonify(status=True, message=f"{base_currency} to {target_currency} successfully.", data=result ), 200
 
 
 
@@ -695,12 +699,6 @@ def create_cj_order():
     except Exception as e:
         return f"Encountered error: {e}"
 
-# BigBuy API endpoint for product list
-BIGBUY_API_URL = "https://api.bigbuy.eu/rest/catalog/products.json"
-
-# Replace with your BigBuy API credentials
-BIGBUY_API_USERNAME = os.environ.get("BIGBUY_API_USERNAME")
-BIGBUY_API_PASSWORD = os.environ.get("BIGBUY_API_USERNAME")
 
 @app.route("/bb_products", methods=["GET"])
 def get_bb_products():
@@ -717,9 +715,7 @@ def get_bb_products():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-# Define BigBuy API base URL and your API key
-BIGBUY_API_BASE_URL = "https://api.bigbuy.eu/"
-BIGBUY_API_KEY =  os.environ.get("BIGBUY_API_KEY") 
+ 
     
 # Define an endpoint to get product details
 @app.route('/product/<int:product_id>', methods=['GET'])
@@ -782,103 +778,8 @@ def get_product_details():
     except requests.exceptions.RequestException as e:
         return jsonify({'error': 'Failed to retrieve product details from BigBuy API'}), 500
 
-@app.route('/get_product_by_sku', methods=['GET'])
-def get_product_by_sku():
-    sku = request.args.get('sku')
 
-    if not sku:
-        return jsonify({"error": "Missing 'sku' parameter"}), 400
 
-    # Construct the URL for the BigBuy API request
-    url = f"{BIGBUY_API_BASE_URL}/rest/catalog/product/{sku}.json"
-
-    # Set headers with the API key
-    headers = {
-        "Authorization": f"Bearer {BIGBUY_API_KEY}"
-    }
-
-    try:
-        # Send a GET request to BigBuy API
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-
-        # Return the response from BigBuy
-        return jsonify(response.json()), response.status_code
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error communicating with BigBuy API: {str(e)}"}), 500
-
-@app.route('/get_shipping_cost', methods=['POST'])
-def get_shipping_cost():
-    try:
-        # Extract order details from the request
-        data = request.json
-        order_id = data['order_id']
-        country_iso = data['country_iso']
-        products = data['products']
-
-        # Construct the request payload
-        payload = {
-            'key': BIGBUY_API_KEY,
-            'username': BIGBUY_USERNAME,
-            'order': order_id,
-            'country': country_iso,
-            'products': products,
-        }
-
-        # Send a POST request to BigBuy's shipping API
-        response = requests.post(BIGBUY_SHIPPING_API_URL, json=payload)
-        response_data = response.json()
-
-        # Check if the response contains an error
-        if 'error' in response_data:
-            return jsonify({'error': response_data['error']['message']}), 400
-
-        # Return the response message from BigBuy
-        return jsonify({'message': response_data['message']})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-@app.route('/categories', methods=['GET'])
-def get_categories():
-    
-    headers = {
-        'Authorization': f'Bearer {BIGBUY_API_KEY}'
-    }
-
-    try:
-        response = requests.get(f'{BIGBUY_API_BASE_URL}/rest/catalog/categories.json'
-    , headers=headers)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-
-        categories = response.json()
-        return jsonify(categories)
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/get_product_variations/<int:product_id>', methods=['GET'])
-def get_product_variations(product_id):
-    try:
-        # Construct the URL with the product ID
-        url = BIGBUY_API_URL.format(product_id=product_id)
-
-        # Set the headers with the API key
-        headers = {
-            'Authorization': f'Bearer {BIGBUY_API_KEY}'
-        }
-
-        # Send a GET request to BigBuy's API
-        response = requests.get(url, headers=headers)
-
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            data = response.json()
-            return jsonify(data)
-        else:
-            return jsonify({"error": "Failed to fetch product variations"}), response.status_code
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
