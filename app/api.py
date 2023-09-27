@@ -551,12 +551,12 @@ api.add_resource(Home,'/')
 #         print(f"Email sending failed: {str(e)}")
 
 #Aendpoint to refresh CJ dropshippinf access token
-@app.route('/cj/refresh_access_token', methods=['POST'])
+@app.route("/cj/refresh_access_token", methods=["POST"])
 def refresh_access_token():
     try:
         # Get the 'refreshToken' from the request JSON data
         request_data = request.json
-        refresh_token = request_data.get('refreshToken')
+        refresh_token = request_data.get("refreshToken")
 
         if not refresh_token:
             return jsonify({"error": "Missing 'refreshToken' parameter"}), 400
@@ -752,8 +752,8 @@ def get_bb_products():
     try:
 
         # Get optional parameters from the query string with default values
-        page = request.json.get('page')
-        page_size = request.json.get('pageSize')
+        page = request.json.get("page")
+        page_size = request.json.get("pageSize")
         #parent_taxonomy = request.json.get('parentTaxonomy', 0)
 
         if not page:
@@ -771,8 +771,8 @@ def get_bb_products():
 
         # Construct the query parameters
         params = {
-            'page': page,
-            'pageSize': page_size,
+            "page": page,
+            "pageSize": page_size,
             
         }
 
@@ -799,7 +799,7 @@ def get_bb_products():
  
     
 # Define an endpoint to get product details
-@app.route('/bb/get/product_details/<int:product_id>', methods=['GET'])
+@app.route("/bb/get/product_details/<int:product_id>", methods=["GET"])
 def get_product_details(product_id):
     try:
         # Construct the BigBuy API URL for product details
@@ -822,7 +822,7 @@ def get_product_details(product_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/bb/create_order', methods=['POST'])
+@app.route("/bb/create_order", methods=["POST"])
 def create_order():
     try:
         # Parse the request data
@@ -886,5 +886,5 @@ def create_order():
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=False, use_reloader=False)
