@@ -600,7 +600,7 @@ def get_cj_products():
         else:
             payload = None
     
-        response = requests.get(f"{CJ_API_BASE_URL}/product/list", headers=headers, json=payload)
+        response = requests.get(f"{CJ_API_BASE_URL}/product/list", headers=headers, params=payload)
         
         if response.status_code == 200:
             products_data = response.json()
