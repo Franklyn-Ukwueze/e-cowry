@@ -826,7 +826,8 @@ def get_product_details(product_id):
 def create_order():
     try:
         # Parse the request data
-        request_data = request.json
+        data = request.json
+        request_data = data.get("order")
 
         # Check for required parameters
         required_params = ["paymentMethod", "shippingAddress", "products"]
