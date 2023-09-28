@@ -873,7 +873,8 @@ def create_order():
 
         # Check if the request was successful
         if response.status_code == 201:
-            return jsonify(response.json), 200
+            payload = response.json
+            return jsonify(payload.get("order_id")), 200
 
         # If there's an error, return the error message from BigBuy
         error_message = response.json().get("message", "Unknown error occurred.")
