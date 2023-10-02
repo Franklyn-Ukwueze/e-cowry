@@ -802,8 +802,11 @@ def get_bb_products():
 @app.route("/bb/get/product_details/<int:product_id>", methods=["GET"])
 def get_product_details(product_id):
     try:
-        # Construct the BigBuy API URL for product details
+        # Construct the BigBuy API URL for product details and image
         product_url = f"{BIGBUY_API_BASE_URL}/rest/catalog/productinformation/{product_id}.json"
+        
+        image_url = f"{BIGBUY_API_BASE_URL}/rest/catalog/productimages/{product_id}.json"
+
 
         # Construct the request headers
         headers = {
@@ -812,11 +815,17 @@ def get_product_details(product_id):
         }
 
         # Send a GET request to BigBuy's API
-        response = requests.get(product_url, headers=headers)
+        product_response = requests.get(product_url, headers=headers)
+        image_response = requests.get(image_url, headers=headers)
 
-        if response.status_code == 200:
-            product_data = response.json()
-            return jsonify(product_data)
+        
+
+        if product_response.status_code and image_response == 200:
+            product_data = product_response.json()
+            image_data = image_response.json().get("images")
+
+            return_data = product_data.update({"image" : image_data[0].get("url")})
+            return jsonify(return_data)
         else:
             return jsonify({"error": "Product not found"}), 404
     except Exception as e:
@@ -877,8 +886,8 @@ def create_order():
             return jsonify(results)
 
         # If there's an error, return the error message from BigBuy
-        #error_message = response.json().get("message", "Unknown error occurred.")
-        #return jsonify({"message": error_message}), response.status_code
+        error_message = response.json().get("message", "Unknown error occurred.")
+        return jsonify({"message": error_message}), response.status_code
 
     except Exception as e:
         return jsonify({"message": str(e)}), 500
