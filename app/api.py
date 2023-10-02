@@ -821,11 +821,11 @@ def get_product_details(product_id):
         
 
         if product_response.status_code and image_response.status_code == 200:
-            product_data = product_response.json()
+            product_data = product_response.json()[0]
             image_data = image_response.json().get("images")
-
-            return_data = product_data.update({"image" : image_data[0].get("url")})
-            return jsonify(return_data)
+            
+            product_data.update({"image" : image_data[0].get("url")})
+            return jsonify(product_data)
         else:
             return jsonify({"error": "Product not found"}), 404
     except Exception as e:
