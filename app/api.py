@@ -820,7 +820,7 @@ def get_product_details(product_id):
 
         
 
-        if product_response.status_code and image_response == 200:
+        if product_response.status_code and image_response.status_code == 200:
             product_data = product_response.json()
             image_data = image_response.json().get("images")
 
