@@ -604,7 +604,7 @@ def get_cj_products():
         
         if response.status_code == 200:
             products_data = response.json()
-            return jsonify(products_data)
+            return jsonify(status=True, message="Products retrieved from CJ dropshipping successfully.", data=products_data), 200
         else:
             return jsonify({"error": "Failed to retrieve products"}), response.status_code
     
@@ -630,10 +630,13 @@ def get_cj_product_details():
         # Construct the request URL based on the provided parameter
         if product_id:
             url = f"{CJ_API_BASE_URL}/product/query?pid={product_id}"
+            pid = product_id
         elif product_sku:
             url = f"{CJ_API_BASE_URL}/product/query?productSku={product_sku}"
+            pid = product_sku
         elif variant_sku:
             url = f"{CJ_API_BASE_URL}/product/query?variantSku={variant_sku}"
+            pid = variant_sku
 
         # Make a request to CJ Dropshipping's product details API
         headers = {
@@ -645,9 +648,9 @@ def get_cj_product_details():
         
         if response.status_code == 200:
             product_data = response.json()
-            return jsonify(product_data)
+            return jsonify(status=True, message=f"Product detatils of product {pid} retrieved successfully.", data=product_data), 200
         else:
-            return jsonify({"error": "Failed to retrieve product details"}), response.status_code
+            return jsonify({"error": "Failed to retrieve product details "}), response.status_code
         
     except Exception as e:
         return f"Encountered error: {e}"
@@ -789,8 +792,8 @@ def get_bb_products():
         response = requests.get(products_url, headers=headers, params=params)
 
         if response.status_code == 200:
-            data = response.json()
-            return jsonify(data)
+            product_data = response.json()
+            return jsonify(status=True, message=f"Products retrieved successfully.", data=product_data), 200
         else:
             return jsonify({"error": "Unable to fetch products from BigBuy API"}), 500
     except Exception as e:
@@ -825,7 +828,7 @@ def get_product_details(product_id):
             image_data = image_response.json().get("images")
             
             product_data.update({"image" : image_data[0].get("url")})
-            return jsonify(product_data)
+            return jsonify(status=True, message=f"Product detatils of product {product_id} retrieved successfully.", data=product_data)
         else:
             return jsonify({"error": "Product not found"}), 404
     except Exception as e:
