@@ -744,7 +744,7 @@ def create_cj_order():
             order_response = response.json()
             return jsonify(order_response)
         else:
-            return jsonify({"error": "Failed to create the order"}), response.status_code
+            return jsonify({"error": "Failed to create the order", "message":response.json().get("message")}), response.status_code
         
     except Exception as e:
         return f"Encountered error: {e}"
